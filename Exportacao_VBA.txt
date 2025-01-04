@@ -1,0 +1,2957 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Planilha - Esta Pasta de Trabalho
+
+
+Private Sub Workbook_Open()
+Call Load_Var
+End Sub
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Planilha - Sistema Elétrico
+
+
+
+Sub AbrirFormDJIN()
+Dim nomeShape As String
+
+nomeShape = BuscaNomeShape
+Load Form_DJIN
+Form_DJIN.Caption = nomeShape
+Form_DJIN.Show
+
+End Sub
+
+Sub AbrirFormFonte()
+Dim nomeShape As String
+
+nomeShape = BuscaNomeGroup
+Load Form_Fonte
+Form_Fonte.Caption = nomeShape
+Form_Fonte.Show
+
+End Sub
+
+Sub AbrirFormPM()
+Dim nomeShape As String
+
+nomeShape = BuscaNomeShape
+Load Form_PM
+Form_PM.Caption = nomeShape
+Form_PM.Show
+
+End Sub
+
+
+Function BuscaNomeShape() As String
+Dim NomeObjeto As String
+Dim escrito As String
+
+'Identifica qual foi o objeto chamado/clicado (Caller)
+NomeObjeto = Application.Caller
+'identifica o texto que está escrito no botão ou desenho
+escrito = ActiveSheet.DrawingObjects(NomeObjeto).Name
+'De acordo com o que está escrito no botão ou desenho chamado,
+BuscaNomeShape = escrito
+
+End Function
+Function BuscaNomeGroup() As String
+Dim NomeObjeto As String
+Dim escrito As String
+
+'Identifica qual foi o objeto chamado/clicado (Caller)
+NomeObjeto = Application.Caller
+'identifica o texto que está escrito no grupo de shapes
+Set shp = ActiveSheet.Shapes(Application.Caller)
+escrito = shp.ParentGroup.Name
+'De acordo com o que está escrito no botão ou desenho chamado,
+BuscaNomeGroup = escrito
+
+End Function
+
+Private Sub CommandButton1_Click()
+Call RotinaAtualização
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Planilha - BD
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Form - Form_DJIN
+
+Private Sub BtnAbrir_Click()
+    Application.Run "Comandos.AbrirDJIN", Form_DJIN.Caption
+    Call SaveForm
+End Sub
+Private Sub BtnFechar_Click()
+    Application.Run "Comandos.FecharDJIN", Form_DJIN.Caption
+    Call SaveForm
+End Sub
+
+Private Sub UserForm_Activate()
+
+linha = FindRowPos(Form_DJIN.Caption)
+DJLoc = Sheets("BD").Cells(linha, 2)
+DJOpen = Sheets("BD").Cells(linha, 3)
+DJPerm = Sheets("BD").Cells(linha, 4)
+DJObs = Sheets("BD").Cells(linha, 5)
+OptBtnLoc.Value = DJLoc
+OptBtnRem.Value = Not DJLoc
+If (DJPerm And DJOpen) Then
+    BtnFechar.Enabled = True
+    BtnAbrir.Enabled = False
+    ElseIf (Not DJOpen) Then
+    BtnFechar.Enabled = False
+    BtnAbrir.Enabled = True
+End If
+LblObs = DJObs
+
+End Sub
+
+Private Sub SaveForm()
+'Sheets("BD").Cells(FindRowPos(Form_DJIN.Caption), 2) = OptBtnLoc.Value
+Unload Me
+End Sub
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Form - Form_FONTE
+
+Private Sub BtnLigar_Click()
+    Application.Run "Comandos.LigarFonte", Form_Fonte.Caption
+    Call SaveForm
+End Sub
+Private Sub BtnDesligar_Click()
+    Application.Run "Comandos.DesligarFonte", Form_Fonte.Caption
+    Call SaveForm
+End Sub
+Private Sub UserForm_Activate()
+linha = FindRowPos(Form_Fonte.Caption)
+EnergOn = Sheets("BD").Cells(linha, 8)
+DJObs = Sheets("BD").Cells(linha, 9)
+If (Not EnergOn) Then
+    BtnLigar.Enabled = True
+    BtnDesligar.Enabled = False
+    ElseIf (EnergOn) Then
+    BtnLigar.Enabled = False
+    BtnDesligar.Enabled = True
+End If
+LblObs = DJObs
+End Sub
+Private Sub SaveForm()
+'Sheets("BD").Cells(FindRowPos(Form_DJIN.Caption), 2) = OptBtnLoc.Value
+Unload Me
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Form - Form_PM
+
+Private Sub BtnSalvar_Click()
+
+Call SavePM
+Unload Me
+
+End Sub
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - Comandos
+
+Private Function AbrirDJIN(nameDJ As String)
+
+ActiveSheet.Shapes.Range(nameDJ).Fill.ForeColor.RGB = vbGreen
+Sheets("BD").Cells(FindRowPos(nameDJ), 3) = True
+
+Call RotinaAtualização
+
+End Function
+
+Private Function FecharDJIN(nameDJ As String)
+
+ActiveSheet.Shapes.Range(nameDJ).Fill.ForeColor.RGB = vbRed
+Sheets("BD").Cells(FindRowPos(nameDJ), 3) = False
+
+If (InStr(nameDJ, "8501") <> 0) Then
+    ArrayDJs = Array("DJ8501A", "DJ8501B", "DJ8501C", "DJ8501E", "DJ8501F")
+    Call RunParal(nameDJ, ArrayDJs, PN8501SeletorDJ, PN8501Paral)
+
+ElseIf (InStr(nameDJ, "3501") <> 0) Then
+    ArrayDJs = Array("DJ3501A", "DJ3501B", "DJ3501C", "DJ3501E", "DJ3501F")
+    Call RunParal(nameDJ, ArrayDJs, PN3501SeletorDJ, PN3501Paral)
+
+ElseIf (InStr(nameDJ, "3504") <> 0) Then
+    ArrayDJs = Array("DJ3504A", "DJ3504B", "DJ3504C", "DJ3504E")
+    Call RunParal(nameDJ, ArrayDJs, PN3504SeletorDJ, PN3504Paral)
+
+ElseIf (InStr(nameDJ, "3507") <> 0) Then
+    ArrayDJs = Array("DJ3507A", "DJ3507B", "DJ3507C", "DJ3507F")
+    Call RunParal(nameDJ, ArrayDJs, PN3507SeletorDJ, PN3507Paral)
+
+ElseIf (InStr(nameDJ, "3510") <> 0) Then
+    ArrayDJs = Array("DJ3510A", "DJ3510B", "DJ3510C", "DJ3510F", "DJ3510G")
+    Call RunParal(nameDJ, ArrayDJs, PN3510SeletorDJ, PN3510Paral)
+
+ElseIf (InStr(nameDJ, "3004") <> 0) Then
+    ArrayDJs = Array("DJ3004A", "DJ3004B", "DJ3004C", "DJ3004E")
+    Call RunParal(nameDJ, ArrayDJs, PN3004SeletorDJ, PN3004Paral)
+
+ElseIf (InStr(nameDJ, "3007") <> 0) Then
+    ArrayDJs = Array("DJ3007A", "DJ3007B", "DJ3007C", "DJ3007F")
+    Call RunParal(nameDJ, ArrayDJs, PN3007SeletorDJ, PN3007Paral)
+
+ElseIf (InStr(nameDJ, "3002") <> 0) Then
+    ArrayDJs = Array("DJ3002A", "DJ3002B", "DJ3002C", "DJ3002F")
+    Call RunParal(nameDJ, ArrayDJs, PN3002SeletorDJ, PN3002Paral)
+
+ElseIf (InStr(nameDJ, "3003") <> 0) Then
+    ArrayDJs = Array("DJ3003A", "DJ3003B", "DJ3003C", "DJ3003G")
+    Call RunParal(nameDJ, ArrayDJs, PN3003SeletorDJ, PN3003Paral)
+
+End If
+
+Call RotinaAtualização
+
+End Function
+Private Function DesligarFonte(nameFonte As String)
+
+ActiveSheet.Shapes(nameFonte).Fill.ForeColor.RGB = vbGreen
+Sheets("BD").Cells(FindRowPos(nameFonte), 8) = False
+
+Call RotinaAtualização
+
+End Function
+
+Private Function LigarFonte(nameFonte As String)
+
+ActiveSheet.Shapes(nameFonte).Fill.ForeColor.RGB = vbRed
+Sheets("BD").Cells(FindRowPos(nameFonte), 8) = True
+
+Call RotinaAtualização
+
+End Function
+
+Private Function RunParal(nameDJClosed As String, ArrayDJ As Variant, seletorDJ As Integer, seletorParal As Integer)
+
+ArrayDJs = ArrayDJ
+LinhaBD_DJ = FindRowPos(ArrayDJ(seletorDJ))
+
+Application.Wait (Now + TimeValue("0:00:00"))
+If (seletorParal = 0) Then
+    disjuntor = ArrayDJs(seletorDJ)
+    statusAtual = Sheets("BD").Cells(LinhaBD_DJ, 3)
+    If (statusAtual = False) Then
+        Sheets("BD").Cells(LinhaBD_DJ, 3) = True
+        Else
+        Sheets("BD").Cells(FindRowPos(nameDJClosed), 3) = True
+    End If
+    Application.Wait (Now + TimeValue("0:00:03"))
+End If
+
+End Function
+
+Sub x()
+
+
+
+End Sub
+
+Public Function AtualizaDesign()
+
+ult_linha = 62
+For linha = 2 To ult_linha
+    If (Sheets("BD").Cells(linha, 3) = False) Then
+        ActiveSheet.Shapes.Range(Array(Sheets("BD").Cells(linha, 1))).Fill.ForeColor.RGB = vbRed
+        Else
+            ActiveSheet.Shapes.Range(Array(Sheets("BD").Cells(linha, 1))).Fill.ForeColor.RGB = vbGreen
+    End If
+    If (Sheets("BD").Cells(linha, 4) = False And Sheets("BD").Cells(linha, 3) = True) Then
+        ActiveSheet.Shapes.Range(Array(Sheets("BD").Cells(linha, 1))).Fill.ForeColor.RGB = RGB(204, 204, 204)
+        If (Sheets("BD").Cells(linha, 5) <> Empty) Then
+            ActiveSheet.Shapes.Range(Array(Sheets("BD").Cells(linha, 1))).Fill.ForeColor.RGB = vbYellow
+        End If
+    End If
+Next linha
+
+ult_linha = 57
+For linha = 11 To ult_linha
+    If (Sheets("BD").Cells(linha, 8) = False) Then
+        ActiveSheet.Shapes(Sheets("BD").Cells(linha, 7)).Line.ForeColor.RGB = vbGreen
+        Else
+            ActiveSheet.Shapes(Sheets("BD").Cells(linha, 7)).Line.ForeColor.RGB = vbRed
+    End If
+Next linha
+
+ult_linha = 10
+For linha = 2 To ult_linha
+    If (Sheets("BD").Cells(linha, 8) = False) Then
+        ActiveSheet.Shapes(Sheets("BD").Cells(linha, 7)).Fill.ForeColor.RGB = vbGreen
+        Else
+            ActiveSheet.Shapes(Sheets("BD").Cells(linha, 7)).Fill.ForeColor.RGB = vbRed
+    End If
+Next linha
+
+End Function
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3001
+Public Sub SeletorPN3001() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Sync. TIE", "Normal") 'Alterar
+ArrayDJ = Array() 'Alterar
+ArrayVar = Array(PN3001TIE, 0) 'Alterar
+Title = "PN-5143001" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3001TIE = tempArr(0) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("TIE", "Normal") 'Alterar
+ArrayDJ = Array("") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3001TIE, 0) 'Alterar
+
+End Sub
+
+
+Public Function CheckTIE3001(disjuntor As String)
+
+If (disjuntor = "" And PN3001TIE = 0) Then
+    CheckTIE3001 = True
+    Else: CheckTIE3001 = False
+End If
+
+End Function
+
+Public Sub AtualizaPN3001()
+
+DJ3001AObs = ""
+DJ3001BObs = ""
+DJ3001CObs = ""
+DJ3001DObs = ""
+DJ3001EObs = ""
+DJ3001FObs = ""
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3001AOpen Or Not DJ3001COpen) Then
+    If (Not DJ3001AOpen And Not DJ3001COpen) Then
+        BusA2fonte = True
+        Else
+            BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3001BOpen Or Not DJ3001DOpen) Then
+    If (Not DJ3001BOpen And Not DJ3001DOpen) Then
+        BusB2fonte = True
+        Else
+            BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3001EOpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3001EOpen And (BusA2fonte Or BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+    
+
+    
+'52A
+DJ3001APerm = False
+If (TGA) Then
+    If (Not BUS3001A) Then
+        DJ3001APerm = True
+    Else
+        'Sincronismo
+        DJ3001APerm = True
+        DJ3001AObs = "Sincronismo com a Barra"
+    End If
+End If
+
+'52B
+DJ3001BPerm = False
+If (TGB) Then
+    If (Not BUS3001B) Then
+        DJ3001BPerm = True
+    Else
+        'Sincronismo
+        DJ3001BPerm = True
+        DJ3001BObs = "Sincronismo com a Barra"
+    End If
+End If
+
+'52C
+DJ3001CPerm = False
+If (TGC) Then
+    If (Not BUS3001A) Then
+        DJ3001CPerm = True
+    Else
+        'Sincronismo
+        DJ3001CPerm = True
+        DJ3001CObs = "Sincronismo com a Barra"
+    End If
+End If
+
+'52D
+DJ3001DPerm = False
+If (TGD) Then
+    If (Not BUS3001B) Then
+        DJ3001DPerm = True
+    Else
+        'Sincronismo
+        DJ3001DPerm = True
+        DJ3001DObs = "Sincronismo momentaneo com a Barra"
+    End If
+End If
+
+'52E
+DJ3001EPerm = False
+If (Not BUS3001A Or Not BUS3001B) Then 'Barra A ou B morta
+    DJ3001EPerm = True
+
+ElseIf (BusA1fonte Or BusB1fonte) Then
+    DJ3001EPerm = CheckTIE3001("")
+    DJ3001EObs = "Sincronismo com gerador que está sozinho na Barra"
+End If
+
+ 
+
+
+
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3002
+
+Public Sub SeletorPN3002() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52F") 'Alterar
+ArrayVar = Array(PN3002Paral, PN3002SeletorDJ) 'Alterar
+Title = "PN-5143002" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3002Paral = tempArr(0) 'Alterar
+    PN3002SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3002Paral, PN3002SeletorDJ) 'Alterar
+
+End Sub
+
+
+
+Public Function CheckParal3002(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52F")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3002SeletorDJ And PN3002Paral = 0) Then
+CheckParal3002 = True
+Else
+CheckParal3002 = False
+End If
+
+End Function
+
+
+Public Sub AtualizaPN3002()
+DJ3002AObs = ""
+DJ3002BObs = ""
+DJ3002CObs = ""
+DJ3002FObs = ""
+Dim asc As Boolean
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AA_Fonte = 0
+If (BF_AA_30023510Receive And Not DJ3510FOpen And BUS3510A And Not DJ3510AOpen) Then
+    BF_AA_Fonte = 1 'A
+ElseIf (BF_AA_30023510Receive And Not DJ3510FOpen And BUS3510A And BUS3510B And Not DJ3510COpen And Not DJ3510BOpen) Then
+    BF_AA_Fonte = 2 'B
+ElseIf (BF_AA_30023510Receive And Not DJ3510FOpen And BUS3510A) Then
+    BF_AA_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3002AOpen Or (Not DJ3002FOpen And BF_AA_30023510Receive)) Then
+    If (Not DJ3002AOpen And (Not DJ3002FOpen And BF_AA_30023510Receive)) Then
+        BusA2fonte = True
+        Else
+            BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3002BOpen) Then
+    BusB1fonte = True
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3002COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3002COpen And (BusA2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3002APerm = False
+If (TF002A And Not BUS3002A) Then 'Barra A morta
+    DJ3002APerm = True
+End If
+If (TF002A And ((BusA1fonte And DJ3002COpen) Or (PN1fonte And Not DJ3002COpen))) Then
+    If (Not DJ3002FOpen And BF_AA_Fonte = 1) Then
+        DJ3002AObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Mesma Fonte"
+        DJ3002APerm = CheckParal3002("52A")
+    ElseIf (Not DJ3002FOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        DJ3002AObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Trafos Sincronizados"
+        DJ3002APerm = CheckParal3002("52A")
+    End If
+    If (Not DJ3002COpen) Then
+        If (Not DJ3002BOpen And Not DJ3001EOpen) Then
+             DJ3002AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+             DJ3002APerm = CheckParal3002("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3002BPerm = False
+If (TF002B And Not BUS3002B) Then 'Barra B morta
+    DJ3002BPerm = True
+End If
+If (TF002B And ((BusB1fonte And DJ3002COpen) Or (PN1fonte And Not DJ3002COpen))) Then
+    If (Not DJ3002COpen) Then
+        If (Not DJ3002AOpen And Not DJ3001EOpen) Then  'TFA e TFB sincronizados
+            DJ3002BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3002BPerm = CheckParal3002("52B")
+        ElseIf (Not DJ3002FOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            DJ3002BObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Trafos Sincronizados"
+            DJ3002BPerm = CheckParal3002("52B")
+        ElseIf (Not DJ3002FOpen And BF_AA_Fonte = 2) Then
+            DJ3002BObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Mesma Fonte"
+            DJ3002BPerm = CheckParal3002("52B")
+        End If
+        
+    End If
+End If
+    
+'Permissivo 52C
+DJ3002CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3002A Or Not BUS3002B) Then 'Barra A ou B morta
+    DJ3002CPerm = True
+End If
+If ((Not DJ3002FOpen And BF_AA_Fonte = 1) Or Not DJ3002AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ3002FOpen And BF_AA_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf ((Not DJ3002FOpen And BF_AA_Fonte = 3)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If (Not DJ3002BOpen) Then
+    FonteBUSB = 2
+
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3002CPerm = CheckParal3002("52C")
+        DJ3002CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And Not DJ3001EOpen) Then
+        DJ3002CPerm = CheckParal3002("52C")
+        DJ3002CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52F
+DJ3002FPerm = False
+If (BF_AA_30023510Receive And Not BUS3002A Or (Not BF_AA_30023510Receive And DJ3510FOpen)) Then 'Barra A morta
+    DJ3002FPerm = True
+End If
+If (BF_AA_30023510Receive And ((BusA1fonte And DJ3002COpen) Or (PN1fonte And Not DJ3002COpen))) Then
+    If (Not DJ3002AOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3002FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3002FPerm = CheckParal3002("52F")
+    ElseIf (Not DJ3002AOpen And BF_AA_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ3002FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3002FPerm = CheckParal3002("52F")
+    End If
+    If (Not DJ3002COpen) Then
+        If (Not DJ3002BOpen And BF_AA_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3002FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3002FPerm = CheckParal3002("52F")
+        ElseIf (Not DJ3002BOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3002FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3002FPerm = CheckParal3002("52F")
+        End If
+    End If
+End If
+
+End Sub
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3003Paral
+Public Sub SeletorPN3003()
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal")
+ArrayDJ = Array("52A", "52B", "52C", "52G")
+ArrayVar = Array(PN3003Paral, PN3003SeletorDJ)
+Title = "PN-5143003"
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3003Paral = tempArr(0)
+    PN3003SeletorDJ = tempArr(1)
+    Call RotinaUpdateSave
+
+End If
+
+ArrayPM = Array("P.M.", "Normal")
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3003Paral, PN3003SeletorDJ)  'Alterar
+
+End Sub
+
+Public Function CheckParal3003(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52G")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3003SeletorDJ And PN3003Paral = 0) Then
+CheckParal3003 = True
+Else
+CheckParal3003 = False
+End If
+
+End Function
+
+
+Public Sub AtualizaPN3003()
+DJ3003AObs = ""
+DJ3003BObs = ""
+DJ3003CObs = ""
+DJ3003GObs = ""
+
+
+
+' Verifica se BF está alimentado e qual fonte.
+BF_BB_Fonte = 0
+If (BF_BB_30033510Receive And Not DJ3510GOpen And BUS3510B And Not DJ3510BOpen) Then
+    BF_BB_Fonte = 2 'B
+ElseIf (BF_BB_30033510Receive And Not DJ3510GOpen And BUS3510B And BUS3510A And Not DJ3510COpen And Not DJ3510AOpen) Then
+    BF_BB_Fonte = 1 'B
+ElseIf (BF_BB_30033510Receive And Not DJ3510GOpen And BUS3510B) Then
+    BF_BB_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3003AOpen) Then
+    BusA1fonte = True
+End If
+
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3003BOpen Or (Not DJ3003GOpen And BF_BB_30033510Receive)) Then
+    If (Not DJ3003BOpen And (Not DJ3003GOpen And BF_BB_30033510Receive)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3003COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3003COpen And (BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3003APerm = False
+If (TF003A And Not BUS3003A) Then 'Barra A morta
+    DJ3003APerm = True
+End If
+If (TF003A And ((BusA1fonte And DJ3003COpen) Or (PN1fonte And Not DJ3003COpen))) Then
+    If (Not DJ3003COpen) Then
+        If (Not DJ3003BOpen And Not DJ3001EOpen) Then
+            DJ3003AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+            DJ3003APerm = CheckParal3003("52A")
+        ElseIf (Not DJ3003GOpen And BF_BB_Fonte = 1) Then
+            DJ3003AObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Mesma Fonte"
+            DJ3003APerm = CheckParal3003("52A")
+        ElseIf (Not DJ3003GOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            DJ3003AObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Trafos Sincronizados"
+            DJ3003APerm = CheckParal3003("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3003BPerm = False
+If (TF003B And Not BUS3003B) Then 'Barra B morta
+    DJ3003BPerm = True
+End If
+If (TF003B And ((BusB1fonte And DJ3003COpen) Or (PN1fonte And Not DJ3003COpen))) Then
+    If (Not DJ3003COpen) Then
+        If (Not DJ3003AOpen And Not DJ3001EOpen) Then  'TFA e TFB sincronizados
+            DJ3003BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3003BPerm = CheckParal3003("52B")
+        End If
+    End If
+    If (Not DJ3003GOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        DJ3003BObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Trafos Sincronizados"
+        DJ3003BPerm = CheckParal3003("52B")
+    ElseIf (Not DJ3003GOpen And BF_BB_Fonte = 2) Then
+        DJ3003BObs = "Permitido Paralelismo Momentâneo - BF com PN5143510 - Mesma Fonte"
+        DJ3003BPerm = CheckParal3003("52B")
+    End If
+End If
+    
+'Permissivo 52C
+DJ3003CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+If (Not DJ3003AOpen) Then
+    FonteBUSA = 1
+If ((Not DJ3003GOpen And BF_BB_Fonte = 2) Or Not DJ3003BOpen) Then
+    FonteBUSB = 2 'B
+ElseIf ((Not DJ3003GOpen And BF_BB_Fonte = 1)) Then
+    FonteBUSB = 1 'A
+ElseIf ((Not DJ3003GOpen And BF_BB_Fonte = 3)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3003CPerm = CheckParal3003("52C")
+        DJ3003CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And Not DJ3001EOpen) Then
+        DJ3003CPerm = CheckParal3003("52C")
+        DJ3003CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52G
+DJ3003GPerm = False
+If (BF_BB_30033510Receive And Not BUS3003B Or (Not BF_BB_30033510Receive And DJ3510GOpen)) Then 'Barra A morta
+    DJ3003GPerm = True
+End If
+If (BF_BB_30033510Receive And ((BusB1fonte And DJ3003COpen) Or (PN1fonte And Not DJ3003COpen))) Then
+    If (Not DJ3003BOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3003GObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3003GPerm = CheckParal3003("52G")
+    ElseIf (Not DJ3003BOpen And BF_BB_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ3003GObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3003GPerm = CheckParal3003("52G")
+    End If
+    If (Not DJ3003COpen) Then
+        If (Not DJ3003AOpen And BF_BB_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3003GObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3003GPerm = CheckParal3003("52G")
+        ElseIf (Not DJ3003AOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3003GObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3003GPerm = CheckParal3003("52G")
+        End If
+    End If
+End If
+
+End Sub
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3004
+
+Public Sub SeletorPN3004() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52E") 'Alterar
+ArrayVar = Array(PN3004Paral, PN3004SeletorDJ) 'Alterar
+Title = "PN-5143004" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3004Paral = tempArr(0) 'Alterar
+    PN3004SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3004Paral, PN3004SeletorDJ) 'Alterar
+
+End Sub
+
+Public Function CheckParal3004(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52E")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3004SeletorDJ And PN3004Paral = 0) Then
+CheckParal3004 = True
+Else
+CheckParal3004 = False
+End If
+
+End Function
+Public Sub AtualizaPN3004()
+DJ3004AObs = ""
+DJ3004BObs = ""
+DJ3004CObs = ""
+DJ3004EObs = ""
+Dim asc As Boolean
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AA_Fonte = 0
+If (BF_AA_30043504Receive And Not DJ3504EOpen And BUS3504A And Not DJ3504AOpen) Then
+    BF_AA_Fonte = 1 'A
+ElseIf (BF_AA_30043504Receive And Not DJ3504EOpen And BUS3504A And BUS3504B And Not DJ3504COpen And Not DJ3504BOpen) Then
+    BF_AA_Fonte = 2 'B
+ElseIf (BF_AA_30043504Receive And Not DJ3504EOpen And BUS3504A) Then
+    BF_AA_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3004AOpen Or (Not DJ3004EOpen And BF_AA_30043504Receive)) Then
+    If (Not DJ3004AOpen And (Not DJ3004EOpen And BF_AA_30043504Receive)) Then
+        BusA2fonte = True
+        Else
+            BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3004BOpen) Then
+    BusB1fonte = True
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3004COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3004COpen And (BusA2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3004APerm = False
+If (TF001A And Not BUS3004A) Then 'Barra A morta
+    DJ3004APerm = True
+End If
+If (TF001A And ((BusA1fonte And DJ3004COpen) Or (PN1fonte And Not DJ3004COpen))) Then
+    If (Not DJ3004EOpen And BF_AA_Fonte = 1) Then
+        DJ3004AObs = "Permitido Paralelismo Momentâneo - BF com PN5143504 - Mesma Fonte"
+        DJ3004APerm = CheckParal3004("52A")
+    ElseIf (Not DJ3004EOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        DJ3004AObs = "Permitido Paralelismo Momentâneo - BF com PN5143504 - Trafos Sincronizados"
+        DJ3004APerm = CheckParal3004("52A")
+    End If
+    If (Not DJ3004COpen) Then
+        If (Not DJ3004BOpen And Not DJ3001EOpen) Then
+             DJ3004AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+             DJ3004APerm = CheckParal3004("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3004BPerm = False
+If (TF001B And Not BUS3004B) Then 'Barra B morta
+    DJ3004BPerm = True
+End If
+If (TF001B And ((BusB1fonte And DJ3004COpen) Or (PN1fonte And Not DJ3004COpen))) Then
+    If (Not DJ3004COpen) Then
+        If (Not DJ3004AOpen And Not DJ3001EOpen) Then  'TFA e TFB sincronizados
+            DJ3004BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3004BPerm = CheckParal3004("52B")
+        ElseIf (Not DJ3004EOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            DJ3004BObs = "Permitido Paralelismo Momentâneo - BF com PN5143504 - Trafos Sincronizados"
+            DJ3004BPerm = CheckParal3004("52B")
+        ElseIf (Not DJ3004EOpen And BF_AA_Fonte = 2) Then
+            DJ3004BObs = "Permitido Paralelismo Momentâneo - BF com PN5143504 - Mesma Fonte"
+            DJ3004BPerm = CheckParal3004("52B")
+        End If
+    End If
+End If
+    
+'Permissivo 52C
+DJ3004CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3004A Or Not BUS3004B) Then 'Barra A ou B morta
+    DJ3004CPerm = True
+End If
+If ((Not DJ3004EOpen And BF_AA_Fonte = 1) Or Not DJ3004AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ3004EOpen And BF_AA_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf ((Not DJ3004EOpen And BF_AA_Fonte = 3)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If (Not DJ3004BOpen) Then
+    FonteBUSB = 2
+
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3004CPerm = CheckParal3004("52C")
+        DJ3004CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And Not DJ3001EOpen) Then
+        DJ3004CPerm = CheckParal3004("52C")
+        DJ3004CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52E
+DJ3004EPerm = False
+If (BF_AA_30043504Receive And Not BUS3004A Or (Not BF_AA_30043504Receive And DJ3504EOpen)) Then 'Barra A morta
+    DJ3004EPerm = True
+End If
+If (BF_AA_30043504Receive And ((BusA1fonte And DJ3004COpen) Or (PN1fonte And Not DJ3004COpen))) Then
+    If (Not DJ3004AOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3004EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3004EPerm = CheckParal3004("52E")
+    ElseIf (Not DJ3004AOpen And BF_AA_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ3004EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3004EPerm = CheckParal3004("52E")
+    End If
+    If (Not DJ3004COpen) Then
+        If (Not DJ3004BOpen And BF_AA_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3004EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3004EPerm = CheckParal3004("52E")
+        ElseIf (Not DJ3004BOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3004EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3004EPerm = CheckParal3004("52E")
+        End If
+    End If
+End If
+
+End Sub
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3007
+
+
+Public Sub SeletorPN3007() 'Alterar
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52F") 'Alterar
+ArrayVar = Array(PN3007Paral, PN3007SeletorDJ) 'Alterar
+Title = "PN-5143007" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3007Paral = tempArr(0) 'Alterar
+    PN3007SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3007Paral, PN3007SeletorDJ)  'Alterar
+
+End Sub
+
+
+Public Function CheckParal3007(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52F")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3007SeletorDJ And PN3007Paral = 0) Then
+CheckParal3007 = True
+Else
+CheckParal3007 = False
+End If
+
+End Function
+
+
+Public Sub AtualizaPN3007()
+DJ3007AObs = ""
+DJ3007BObs = ""
+DJ3007CObs = ""
+DJ3007FObs = ""
+
+' Verifica se BF está alimentado e qual fonte.
+BF_BB_Fonte = 0
+If (BF_BB_30073507Receive And Not DJ3507FOpen And BUS3507B And Not DJ3507BOpen) Then
+    BF_BB_Fonte = 2 'B
+ElseIf (BF_BB_30073507Receive And Not DJ3507FOpen And BUS3507B And BUS3507A And Not DJ3507COpen And Not DJ3507AOpen) Then
+    BF_BB_Fonte = 1 'B
+ElseIf (BF_BB_30073507Receive And Not DJ3507FOpen And BUS3507B) Then
+    BF_BB_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3007AOpen) Then
+    BusA1fonte = True
+End If
+
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3007BOpen Or (Not DJ3007FOpen And BF_BB_30073507Receive)) Then
+    If (Not DJ3007BOpen And (Not DJ3007FOpen And BF_BB_30073507Receive)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3007COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3007COpen And (BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3007APerm = False
+If (TF001A And Not BUS3007A) Then 'Barra A morta
+    DJ3007APerm = True
+End If
+If (TF001A And ((BusA1fonte And DJ3007COpen) Or (PN1fonte And Not DJ3007COpen))) Then
+    If (Not DJ3007COpen) Then
+        If (Not DJ3007BOpen And Not DJ3001EOpen) Then
+            DJ3007AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+            DJ3007APerm = CheckParal3007("52A")
+        ElseIf (Not DJ3007FOpen And BF_BB_Fonte = 1) Then
+            DJ3007AObs = "Permitido Paralelismo Momentâneo - BF com PN5143507 - Mesma Fonte"
+            DJ3007APerm = CheckParal3007("52A")
+        ElseIf (Not DJ3007FOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            DJ3007AObs = "Permitido Paralelismo Momentâneo - BF com PN5143507 - Trafos Sincronizados"
+            DJ3007APerm = CheckParal3007("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3007BPerm = False
+If (TF001B And Not BUS3007B) Then 'Barra B morta
+    DJ3007BPerm = True
+End If
+If (TF001B And ((BusB1fonte And DJ3007COpen) Or (PN1fonte And Not DJ3007COpen))) Then
+    If (Not DJ3007COpen) Then
+        If (Not DJ3007AOpen And Not DJ3001EOpen) Then  'TFA e TFB sincronizados
+            DJ3007BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3007BPerm = CheckParal3007("52B")
+        End If
+    End If
+    If (Not DJ3007FOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        DJ3007BObs = "Permitido Paralelismo Momentâneo - BF com PN5143507 - Trafos Sincronizados"
+        DJ3007BPerm = CheckParal3007("52B")
+    ElseIf (Not DJ3007FOpen And BF_BB_Fonte = 2) Then
+        DJ3007BObs = "Permitido Paralelismo Momentâneo - BF com PN5143507 - Mesma Fonte"
+        DJ3007BPerm = CheckParal3007("52B")
+    End If
+End If
+    
+'Permissivo 52C
+DJ3007CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3007A Or Not BUS3007B) Then 'Barra A ou B morta
+    DJ3007CPerm = True
+End If
+
+If (Not DJ3007AOpen) Then
+    FonteBUSA = 1
+End If
+
+If ((Not DJ3007FOpen And BF_BB_Fonte = 2) Or Not DJ3007BOpen) Then
+    FonteBUSB = 2 'B
+ElseIf ((Not DJ3007FOpen And BF_BB_Fonte = 1)) Then
+    FonteBUSB = 1 'A
+ElseIf ((Not DJ3007FOpen And BF_BB_Fonte = 3)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3007CPerm = CheckParal3007("52C")
+        DJ3007CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And Not DJ3001EOpen) Then
+        DJ3007CPerm = CheckParal3007("52C")
+        DJ3007CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52F
+DJ3007FPerm = False
+If (BF_BB_30073507Receive And Not BUS3007B Or (Not BF_BB_30073507Receive And DJ3507FOpen)) Then 'Barra A morta
+    DJ3007FPerm = True
+End If
+If (BF_BB_30073507Receive And ((BusB1fonte And DJ3007COpen) Or (PN1fonte And Not DJ3007COpen))) Then
+    If (Not DJ3007BOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3007FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3007FPerm = CheckParal3007("52F")
+    ElseIf (Not DJ3007BOpen And BF_BB_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ3007FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3007FPerm = CheckParal3007("52F")
+    End If
+    If (Not DJ3007COpen) Then
+        If (Not DJ3007AOpen And BF_BB_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3007FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3007FPerm = CheckParal3007("52F")
+        ElseIf (Not DJ3007AOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3007FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3007FPerm = CheckParal3007("52F")
+        End If
+    End If
+End If
+
+End Sub
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3501
+
+Public Sub SeletorPN3501() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal", "Paral. AGCP") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52E", "52F") 'Alterar
+ArrayVar = Array(PN3501Paral, PN3501SeletorDJ) 'Alterar
+Title = "PN-5143501" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3501Paral = tempArr(0) 'Alterar
+    PN3501SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal", "AGCP") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3501Paral, PN3501SeletorDJ) 'Alterar
+
+End Sub
+
+Public Function CheckAGCP3501(disjuntor As String)
+
+If (disjuntor = "" And PN3501Paral = 2) Then
+CheckAGCP3501 = True
+Else: CheckAGCP3501 = False
+End If
+
+End Function
+Public Function CheckParal3501(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52E", "52F")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3501SeletorDJ And PN3501Paral = 0) Then
+CheckParal3501 = True
+Else
+CheckParal3501 = False
+End If
+
+End Function
+
+Sub AtualizaPN3501()
+
+DJ3501AObs = ""
+DJ3501BObs = ""
+DJ3501CObs = ""
+DJ3501DObs = ""
+DJ3501EObs = ""
+DJ3501FObs = ""
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AB_Fonte = 0
+If (BF_AB_85013501Send And Not DJ8501EOpen And BUS8501A And Not DJ8501AOpen) Then
+    BF_AB_Fonte = 1 'A
+ElseIf (BF_AB_85013501Send And Not DJ8501EOpen And BUS8501A And BUS8501B And Not DJ8501COpen And Not DJ8501BOpen) Then
+    BF_AB_Fonte = 2 'B
+ElseIf (BF_AB_85013501Send And Not DJ8501EOpen And BUS8501A And BUS8501B And Not DJ8501COpen And Not DJ8501DOpen) Then
+    BF_AB_Fonte = 3 'INDEFINIDA
+
+End If
+BF_BA_Fonte = 0
+If (BF_BA_85013501Send And Not DJ8501FOpen And BUS8501B And Not DJ8501BOpen) Then
+    BF_BA_Fonte = 2 'B
+ElseIf (BF_BA_85013501Send And Not DJ8501FOpen And BUS8501B And BUS8501A And Not DJ8501COpen And Not DJ8501AOpen) Then
+    BF_BA_Fonte = 1 'A
+ElseIf (BF_BA_85013501Send And Not DJ8501FOpen And BUS8501B And Not DJ8501DOpen) Then
+    BF_BA_Fonte = 3 'INDEFINIDA
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3501AOpen Or Not DJ3501DOpen Or (BF_BA_85013501Send And Not DJ3501EOpen)) Then
+    If (Not DJ3501AOpen And (BF_BA_85013501Send And Not DJ3501EOpen)) Then
+        BusA2fonte = True
+    ElseIf (Not DJ3501DOpen And (BF_BA_85013501Send And Not DJ3501EOpen)) Then
+        BusA2fonte = True
+    ElseIf (Not DJ3501DOpen And Not DJ3501AOpen) Then
+        BusA2fonte = True
+    Else
+        BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3501BOpen Or (BF_AB_85013501Send And Not DJ3501FOpen)) Then
+    If (Not DJ3501BOpen And (BF_AB_85013501Send And Not DJ3501FOpen)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3501COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3501COpen And (BusA2fonte Or BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+ 
+'52A
+DJ3501APerm = False
+If (TF3502A And Not BUS3501A) Then
+    DJ3501APerm = True
+End If
+If (TF3502A And (DJ3501COpen And BusA1fonte) Or (Not DJ3501COpen And PN1fonte)) Then
+    If (Not DJ3501EOpen And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        DJ3501APerm = CheckParal3501("52A")
+        DJ3501AObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+    ElseIf (Not DJ3501EOpen And BF_BA_Fonte = 1) Then
+        DJ3501APerm = CheckParal3501("52A")
+        DJ3501AObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+    ElseIf (Not DJ3501DOpen) Then
+        DJ3501APerm = CheckAGCP3501("")
+        DJ3501AObs = "Paralelismo GA-TF"
+    End If
+    If (Not DJ3501COpen) Then  'Tie fechado
+        If (BUS3510MesmaFonte And Not DJ3501BOpen) Then 'Paralelismo de TFs
+            DJ3501APerm = CheckParal3501("52A")
+            DJ3501AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ3501FOpen And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ3501APerm = CheckParal3501("52A")
+            DJ3501AObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501FOpen And BF_AB_Fonte = 1) Then
+            DJ3501APerm = CheckParal3501("52A")
+            DJ3501AObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'52B
+DJ3501BPerm = False
+If (TF3502B And Not BUS3501B) Then
+    DJ3501BPerm = True
+End If
+If (TF3502B And (DJ3501COpen And BusB1fonte) Or (Not DJ3501COpen And PN1fonte)) Then
+    If (Not DJ3501FOpen And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        DJ3501BPerm = CheckParal3501("52B")
+        DJ3501BObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+    ElseIf (Not DJ3501FOpen And BF_AB_Fonte = 2) Then
+        DJ3501BPerm = CheckParal3501("52B")
+        DJ3501BObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+    End If
+    If (Not DJ3501COpen) Then  'Tie fechado
+        If (Not DJ3501DOpen) Then
+            DJ3501BPerm = CheckAGCP3501("")
+            DJ3501BObs = "Paralelismo GA-TF"
+        ElseIf (BUS3510MesmaFonte And Not DJ3501AOpen) Then 'Paralelismo de TFs
+            DJ3501BPerm = CheckParal3501("52B")
+            DJ3501BObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ3501EOpen And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ3501BPerm = CheckParal3501("52B")
+            DJ3501BObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501EOpen And BF_BA_Fonte = 2) Then
+            DJ3501BPerm = CheckParal3501("52B")
+            DJ3501BObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52C
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If ((Not DJ3501EOpen And BF_BA_Fonte = 1) Or Not DJ3501AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ3501EOpen And BF_BA_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf (Not DJ3501DOpen Or (Not DJ3501EOpen And BF_BA_Fonte = 3)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If ((Not DJ3501FOpen And BF_AB_Fonte = 2) Or Not DJ3501BOpen) Then
+    FonteBUSB = 2 'A
+ElseIf ((Not DJ3501FOpen And BF_AB_Fonte = 1)) Then
+    FonteBUSB = 1 'B
+ElseIf ((Not DJ3501FOpen And BF_AB_Fonte = 3)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+
+
+DJ3501CPerm = False
+If (Not BUS3501A Or Not BUS3501B) Then 'Barra A ou B morta
+    DJ3501CPerm = True
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB And FonteBUSA <> 3 And FonteBUSB <> 3) Then
+        DJ3501CPerm = CheckParal3501("52C")
+        DJ3501CObs = "Permitido Paralelismo Momentâneo - Mesma fonte"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3 And FonteBUSB <> 3) And BUS3510MesmaFonte) Then
+        DJ3501CPerm = CheckParal3501("52C")
+        DJ3501CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    ElseIf ((FonteBUSA <> FonteBUSB And Not DJ3501DOpen)) Then
+        DJ3501CPerm = CheckAGCP3501("")
+        DJ3501CObs = "Paralelismo com GA"
+    End If
+End If
+
+
+'52D
+DJ3501DPerm = False
+If (Gauxiliar) Then
+    If (Not BUS3501A) Then
+        DJ3501DPerm = True
+    End If
+    If (DJ3501COpen And BusA1fonte Or (Not DJ3501COpen And PN1fonte)) Then
+        DJ3501DPerm = CheckAGCP3501("")
+        DJ3501DObs = "Paralelismo GA"
+    End If
+End If
+
+'Permissivo 52E
+DJ3501EPerm = False
+If (BF_BA_85013501Send And Not BUS3501A Or (Not BF_BA_85013501Send And DJ8501FOpen)) Then 'Barra A morta
+    DJ3501EPerm = True
+End If
+If (BF_BA_85013501Send And ((BusA1fonte And DJ3501COpen) Or (PN1fonte And Not DJ3501COpen))) Then
+    If (Not DJ3501AOpen And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ3501EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3501EPerm = CheckParal3501("52E")
+    ElseIf (Not DJ3501AOpen And BF_BA_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ3501EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3501EPerm = CheckParal3501("52E")
+    ElseIf (Not DJ3501DOpen) Then
+        'Paralelismo momentaneo
+        DJ3501EPerm = CheckAGCP3501("")
+        DJ3501EObs = "Paralelismo com GA"
+    End If
+    If (Not DJ3501COpen) Then
+        If (Not DJ3501BOpen And BF_BA_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3501EPerm = CheckParal3501("52E")
+        ElseIf (Not DJ3501BOpen And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3501EPerm = CheckParal3501("52E")
+        ElseIf (Not DJ3501FOpen And BF_BA_Fonte = 2 And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ3501EPerm = CheckParal3501("52E")
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501FOpen And BF_BA_Fonte = 2 And BF_AB_Fonte = 2) Then
+            DJ3501EPerm = CheckParal3501("52E")
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        ElseIf (Not DJ3501FOpen And BF_BA_Fonte = 1 And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ3501EPerm = CheckParal3501("52E")
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501FOpen And BF_BA_Fonte = 1 And BF_AB_Fonte = 1) Then
+            DJ3501EPerm = CheckParal3501("52E")
+            DJ3501EObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52F
+DJ3501FPerm = False
+If (BF_AB_85013501Send And Not BUS3501B Or (Not BF_AB_85013501Send And DJ8501EOpen)) Then 'Barra A morta
+    DJ3501FPerm = True
+End If
+If (BF_AB_85013501Send And ((BusB1fonte And DJ3501COpen) Or (PN1fonte And Not DJ3501COpen))) Then
+    If (Not DJ3501BOpen And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ3501FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3501FPerm = CheckParal3501("52F")
+    ElseIf (Not DJ3501BOpen And BF_AB_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ3501FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3501FPerm = CheckParal3501("52F")
+    End If
+    If (Not DJ3501COpen) Then
+        If (Not DJ3501AOpen And BF_AB_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3501FPerm = CheckParal3501("52F")
+        ElseIf (Not DJ3501AOpen And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3501FPerm = CheckParal3501("52F")
+        ElseIf (Not DJ3501EOpen And BF_AB_Fonte = 2 And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ3501FPerm = CheckParal3501("52F")
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501EOpen And BF_AB_Fonte = 2 And BF_BA_Fonte = 2) Then
+            DJ3501FPerm = CheckParal3501("52F")
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        ElseIf (Not DJ3501EOpen And BF_AB_Fonte = 1 And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ3501FPerm = CheckParal3501("52F")
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Trafos Sincronizados"
+        ElseIf (Not DJ3501EOpen And BF_AB_Fonte = 1 And BF_BA_Fonte = 1) Then
+            DJ3501FPerm = CheckParal3501("52F")
+            DJ3501FObs = "Permitido Paralelismo Momentâneo - BF com PN5148501 - Mesma fonte"
+        ElseIf (Not DJ3501DOpen) Then
+            'Paralelismo momentaneo
+            DJ3501FPerm = CheckAGCP3501("")
+            DJ3501FObs = "Paralelismo com GA"
+        End If
+    End If
+End If
+
+
+
+End Sub
+
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3504
+
+Public Sub SeletorPN3504() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52E") 'Alterar
+ArrayVar = Array(PN3504Paral, PN3504SeletorDJ) 'Alterar
+Title = "PN-5143504" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3504Paral = tempArr(0) 'Alterar
+    PN3504SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3504Paral, PN3504SeletorDJ) 'Alterar
+
+End Sub
+
+Public Function CheckParal3504(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52E")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3504SeletorDJ And PN3504Paral = 0) Then
+CheckParal3504 = True
+Else
+CheckParal3504 = False
+End If
+
+End Function
+Public Sub AtualizaPN3504()
+DJ3504AObs = ""
+DJ3504BObs = ""
+DJ3504CObs = ""
+DJ3504EObs = ""
+Dim asc As Boolean
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AA_Fonte = 0
+If (BF_AA_30043504Send And Not DJ3004EOpen And BUS3004A And Not DJ3004AOpen) Then
+    BF_AA_Fonte = 1 'A
+ElseIf (BF_AA_30043504Send And Not DJ3004EOpen And BUS3004A And BUS3004B And Not DJ3004COpen And Not DJ3004BOpen) Then
+    BF_AA_Fonte = 2 'B
+ElseIf (BF_AA_30043504Send And Not DJ3004EOpen And BUS3004A) Then
+    BF_AA_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3504AOpen Or (Not DJ3504EOpen And BF_AA_30043504Send)) Then
+    If (Not DJ3504AOpen And (Not DJ3504EOpen And BF_AA_30043504Send)) Then
+        BusA2fonte = True
+        Else
+            BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3504BOpen) Then
+    BusB1fonte = True
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3504COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3504COpen And (BusA2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3504APerm = False
+If (TF3503A And Not BUS3504A) Then 'Barra A morta
+    DJ3504APerm = True
+End If
+If (TF3503A And ((BusA1fonte And DJ3504COpen) Or (PN1fonte And Not DJ3504COpen))) Then
+    If (Not DJ3504EOpen And BF_AA_Fonte = 1) Then
+        DJ3504AObs = "Permitido Paralelismo Momentâneo - BF com PN5143004 - Mesma Fonte"
+        DJ3504APerm = CheckParal3504("52A")
+    ElseIf (Not DJ3504EOpen And BF_AA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        DJ3504AObs = "Permitido Paralelismo Momentâneo - BF com PN5143004 - Trafos Sincronizados"
+        DJ3504APerm = CheckParal3504("52A")
+    End If
+    If (Not DJ3504COpen) Then
+        If (Not DJ3504BOpen And BUS3510MesmaFonte) Then
+             DJ3504AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+             DJ3504APerm = CheckParal3504("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3504BPerm = False
+If (TF3503B And Not BUS3504B) Then 'Barra B morta
+    DJ3504BPerm = True
+End If
+If (TF3503B And ((BusB1fonte And DJ3504COpen) Or (PN1fonte And Not DJ3504COpen))) Then
+    If (Not DJ3504COpen) Then
+        If (Not DJ3504AOpen And BUS3510MesmaFonte) Then  'TFA e TFB sincronizados
+            DJ3504BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3504BPerm = CheckParal3504("52B")
+        ElseIf (Not DJ3504EOpen And BF_AA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ3504BObs = "Permitido Paralelismo Momentâneo - BF com PN5143004 - Trafos Sincronizados"
+            DJ3504BPerm = CheckParal3504("52B")
+        ElseIf (Not DJ3504EOpen And BF_AA_Fonte = 2) Then
+            DJ3504BObs = "Permitido Paralelismo Momentâneo - BF com PN5143004 - Mesma Fonte"
+            DJ3504BPerm = CheckParal3504("52B")
+        End If
+    End If
+End If
+    
+'Permissivo 52C
+DJ3504CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3504A Or Not BUS3504B) Then 'Barra A ou B morta
+    DJ3504CPerm = True
+End If
+If ((Not DJ3504EOpen And BF_AA_Fonte = 1) Or Not DJ3504AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ3504EOpen And BF_AA_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf ((Not DJ3504EOpen And BF_AA_Fonte = 3)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If (Not DJ3504BOpen) Then
+    FonteBUSB = 2
+
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3504CPerm = CheckParal3504("52C")
+        DJ3504CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And BUS3510MesmaFonte) Then
+        DJ3504CPerm = CheckParal3504("52C")
+        DJ3504CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52E
+DJ3504EPerm = False
+If (BF_AA_30043504Send And Not BUS3504A Or (Not BF_AA_30043504Send And DJ3504EOpen)) Then 'Barra A morta
+    DJ3504EPerm = True
+End If
+If (BF_AA_30043504Send And ((BusA1fonte And DJ3504COpen) Or (PN1fonte And Not DJ3504COpen))) Then
+    If (Not DJ3504AOpen And BF_AA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ3504EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3504EPerm = CheckParal3504("52E")
+    ElseIf (Not DJ3504AOpen And BF_AA_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ3504EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3504EPerm = CheckParal3504("52E")
+    End If
+    If (Not DJ3504COpen) Then
+        If (Not DJ3504BOpen And BF_AA_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3504EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3504EPerm = CheckParal3504("52E")
+        ElseIf (Not DJ3504BOpen And BF_AA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3504EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3504EPerm = CheckParal3504("52E")
+        End If
+    End If
+End If
+
+End Sub
+
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3507
+
+Public Sub SeletorPN3507() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52F") 'Alterar
+ArrayVar = Array(PN3507Paral, PN3507SeletorDJ) 'Alterar
+Title = "PN-5143507" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3507Paral = tempArr(0) 'Alterar
+    PN3507SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3507Paral, PN3507SeletorDJ) 'Alterar
+
+End Sub
+
+Public Function CheckParal3507(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52F")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3507SeletorDJ And PN3507Paral = 0) Then
+CheckParal3507 = True
+Else
+CheckParal3507 = False
+End If
+
+End Function
+
+
+Public Sub AtualizaPN3507()
+DJ3507AObs = ""
+DJ3507BObs = ""
+DJ3507CObs = ""
+DJ3507FObs = ""
+
+' Verifica se BF está alimentado e qual fonte.
+BF_BB_Fonte = 0
+If (BF_BB_30073507Send And Not DJ3007FOpen And BUS3007B And Not DJ3007BOpen) Then
+    BF_BB_Fonte = 2 'B
+ElseIf (BF_BB_30073507Send And Not DJ3007FOpen And BUS3007B And BUS3007A And Not DJ3007COpen And Not DJ3007AOpen) Then
+    BF_BB_Fonte = 1 'B
+ElseIf (BF_BB_30073507Send And Not DJ3007FOpen And BUS3007B) Then
+    BF_BB_Fonte = 3 'indefinida
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3507AOpen) Then
+    BusA1fonte = True
+End If
+
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3507BOpen Or (Not DJ3507FOpen And BF_BB_30073507Send)) Then
+    If (Not DJ3507BOpen And (Not DJ3507FOpen And BF_BB_30073507Send)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3507COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3507COpen And (BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+
+'Permissivo 52A
+DJ3507APerm = False
+If (TF3503A And Not BUS3507A) Then 'Barra A morta
+    DJ3507APerm = True
+End If
+If (TF3503A And ((BusA1fonte And DJ3507COpen) Or (PN1fonte And Not DJ3507COpen))) Then
+    If (Not DJ3507COpen) Then
+        If (Not DJ3507BOpen And BUS3510MesmaFonte) Then
+            DJ3507AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+            DJ3507APerm = CheckParal3507("52A")
+        ElseIf (Not DJ3507FOpen And BF_BB_Fonte = 1) Then
+            DJ3507AObs = "Permitido Paralelismo Momentâneo - BF com PN5143007 - Mesma Fonte"
+            DJ3507APerm = CheckParal3507("52A")
+        ElseIf (Not DJ3507FOpen And BF_BB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ3507AObs = "Permitido Paralelismo Momentâneo - BF com PN5143007 - Trafos Sincronizados"
+            DJ3507APerm = CheckParal3507("52A")
+        End If
+    End If
+End If
+
+'Permissivo 52B
+DJ3507BPerm = False
+If (TF3503B And Not BUS3507B) Then 'Barra B morta
+    DJ3507BPerm = True
+End If
+If (TF3503B And ((BusB1fonte And DJ3507COpen) Or (PN1fonte And Not DJ3507COpen))) Then
+    If (Not DJ3507COpen) Then
+        If (Not DJ3507AOpen And BUS3510MesmaFonte) Then  'TFA e TFB sincronizados
+            DJ3507BObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3507BPerm = CheckParal3507("52B")
+        End If
+    End If
+    If (Not DJ3507FOpen And BF_BB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        DJ3507BObs = "Permitido Paralelismo Momentâneo - BF com PN5143007 - Trafos Sincronizados"
+        DJ3507BPerm = CheckParal3507("52B")
+    ElseIf (Not DJ3507FOpen And BF_BB_Fonte = 2) Then
+        DJ3507BObs = "Permitido Paralelismo Momentâneo - BF com PN5143007 - Mesma Fonte"
+        DJ3507BPerm = CheckParal3507("52B")
+    End If
+End If
+    
+'Permissivo 52C
+DJ3507CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3507A Or Not BUS3507B) Then 'Barra A ou B morta
+    DJ3507CPerm = True
+End If
+
+If (Not DJ3507AOpen) Then
+    FonteBUSA = 1
+End If
+
+If ((Not DJ3507FOpen And BF_BB_Fonte = 2) Or Not DJ3507BOpen) Then
+    FonteBUSB = 2 'B
+ElseIf ((Not DJ3507FOpen And BF_BB_Fonte = 1)) Then
+    FonteBUSB = 1 'A
+ElseIf ((Not DJ3507FOpen And BF_BB_Fonte = 3)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3507CPerm = CheckParal3507("52C")
+        DJ3507CObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3) And BUS3510MesmaFonte) Then
+        DJ3507CPerm = CheckParal3507("52C")
+        DJ3507CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    End If
+End If
+
+'Permissivo 52F
+DJ3507FPerm = False
+If (BF_BB_30073507Send And Not BUS3507B Or (Not BF_BB_30073507Send And DJ3007FOpen)) Then 'Barra A morta
+    DJ3507FPerm = True
+End If
+If (BF_BB_30073507Send And ((BusB1fonte And DJ3507COpen) Or (PN1fonte And Not DJ3507COpen))) Then
+    If (Not DJ3507BOpen And BF_BB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ3507FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3507FPerm = CheckParal3507("52F")
+    ElseIf (Not DJ3507BOpen And BF_BB_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ3507FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3507FPerm = CheckParal3507("52F")
+    End If
+    If (Not DJ3507COpen) Then
+        If (Not DJ3507AOpen And BF_BB_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3507FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3507FPerm = CheckParal3507("52F")
+        ElseIf (Not DJ3507AOpen And BF_BB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3507FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3507FPerm = CheckParal3507("52F")
+        End If
+    End If
+End If
+
+End Sub
+
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN3510
+
+Public Sub SeletorPN3510() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal", "Paral. HG") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52F", "52G") 'Alterar
+ArrayVar = Array(PN3510Paral, PN3510SeletorDJ) 'Alterar
+Title = "PN-5143510" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN3510Paral = tempArr(0) 'Alterar
+    PN3510SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal", "HGCP") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN3510Paral, PN3510SeletorDJ) 'Alterar
+
+End Sub
+
+Public Function CheckParal3510(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52F", "52G")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN3510SeletorDJ And PN3510Paral = 0) Then
+CheckParal3510 = True
+Else
+CheckParal3510 = False
+End If
+
+End Function
+Public Function CheckHG3510(disjuntor As String)
+
+If (disjuntor = "" And PN3510Paral = 2) Then
+CheckHG3510 = True
+Else: CheckHG3510 = False
+End If
+
+End Function
+
+
+Public Sub AtualizaPN3510()
+
+
+DJ3510AObs = ""
+DJ3510BObs = ""
+DJ3510CObs = ""
+DJ3510DObs = ""
+DJ3510EObs = ""
+DJ3510FObs = ""
+
+
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AA_Fonte = 0
+If (BF_AA_30023510Send And Not DJ3002FOpen And BUS3002A And Not DJ3002AOpen) Then
+    BF_AA_Fonte = 1 'A
+ElseIf (BF_AA_30023510Send And Not DJ3002FOpen And BUS3002A And BUS3002B And Not DJ3002COpen And Not DJ3002BOpen) Then
+    BF_AA_Fonte = 2 'B
+End If
+BF_BB_Fonte = 0
+If (BF_BB_30033510Send And Not DJ3003GOpen And BUS3003B And Not DJ3003BOpen) Then
+    BF_BB_Fonte = 2 'B
+ElseIf (BF_BB_30033510Send And Not DJ3003GOpen And BUS3003B And BUS3003A And Not DJ3003COpen And Not DJ3003AOpen) Then
+    BF_BB_Fonte = 1 'A
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ3510AOpen Or Not DJ3510DOpen Or (BF_AA_30023510Send And Not DJ3510FOpen)) Then
+    If (Not DJ3510AOpen And Not DJ3510DOpen) Then
+        BusA2fonte = True
+    ElseIf (Not DJ3510AOpen And (BF_AA_30023510Send And Not DJ3510FOpen)) Then
+        BusA2fonte = True
+    ElseIf (Not DJ3510DOpen And (BF_AA_30023510Send And Not DJ3510FOpen)) Then
+        BusA2fonte = True
+    Else
+        BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ3510BOpen Or Not DJ3510EOpen Or (BF_BB_30033510Send And Not DJ3510GOpen)) Then
+    If (Not DJ3510BOpen And Not DJ3510EOpen) Then
+        BusB2fonte = True
+    ElseIf (Not DJ3510BOpen And (BF_BB_30033510Send And Not DJ3510GOpen)) Then
+        BusB2fonte = True
+    ElseIf (Not DJ3510EOpen And (BF_BB_30033510Send And Not DJ3510GOpen)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ3510COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ3510COpen And (BusA2fonte Or BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+    
+    
+    
+'52A
+DJ3510APerm = False
+If (TF501A And Not BUS3510A) Then
+    DJ3510APerm = True
+End If
+If (TF501A And (DJ3510COpen And BusA1fonte) Or (Not DJ3510COpen And PN1fonte)) Then
+    If (Not DJ3510DOpen) Then
+        DJ3510APerm = CheckHG3510("")
+        DJ3510AObs = "Paralelismo HULLGA-TF"
+    ElseIf (Not DJ3510FOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        DJ3510APerm = CheckParal3510("52A")
+        DJ3510AObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Trafos Sincronizados"
+    ElseIf (Not DJ3510FOpen And BF_AA_Fonte = 1) Then
+        DJ3510APerm = CheckParal3510("52A")
+        DJ3510AObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Mesma fonte"
+    End If
+    If (Not DJ3510COpen) Then  'Tie fechado
+        If (Not DJ3001EOpen And Not DJ3510BOpen) Then 'Paralelismo de TFs
+            DJ3510APerm = CheckParal3510("52A")
+            DJ3510AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ3510EOpen) Then 'Sincronismo TF-HG
+            DJ3510APerm = CheckHG3510("")
+            DJ3510AObs = "Paralelismo HULLGB-TF"
+        ElseIf (Not DJ3510GOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            DJ3510APerm = CheckParal3510("52A")
+            DJ3510AObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Trafos Sincronizados"
+        ElseIf (Not DJ3510GOpen And BF_AA_Fonte = 1) Then
+            DJ3510APerm = CheckParal3510("52A")
+            DJ3510AObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Mesma fonte"
+        End If
+    End If
+End If
+
+'52B
+DJ3510BPerm = False
+If (TF501B And Not BUS3510B) Then
+    DJ3510BPerm = True
+End If
+If (TF501B And (DJ3510COpen And BusB1fonte) Or (Not DJ3510COpen And PN1fonte)) Then
+    If (Not DJ3510EOpen) Then
+        DJ3510BPerm = CheckHG3510("")
+        DJ3510BObs = "Paralelismo HULLGA-TF"
+    ElseIf (Not DJ3510GOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        DJ3510BPerm = CheckParal3510("52B")
+        DJ3510BObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Trafos Sincronizados"
+    ElseIf (Not DJ3510GOpen And BF_BB_Fonte = 2) Then
+        DJ3510BPerm = CheckParal3510("52B")
+        DJ3510BObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Mesma fonte"
+    End If
+    If (Not DJ3510COpen) Then  'Tie fechado
+        If (Not DJ3001EOpen And Not DJ3510AOpen) Then 'Paralelismo de TFs
+            DJ3510BPerm = CheckParal3510("52B")
+            DJ3510BObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ3510DOpen) Then 'Sincronismo TF-HG
+            DJ3510BPerm = CheckHG3510("")
+            DJ3510BObs = "Paralelismo HULLGB-TF"
+        ElseIf (Not DJ3510FOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            DJ3510BPerm = CheckParal3510("52B")
+            DJ3510BObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Trafos Sincronizados"
+        ElseIf (Not DJ3510FOpen And BF_AA_Fonte = 2) Then
+            DJ3510BPerm = CheckParal3510("52B")
+            DJ3510BObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52C
+DJ3510CPerm = False
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If (Not BUS3510A Or Not BUS3510B) Then 'Barra A ou B morta
+    DJ3510CPerm = True
+End If
+If ((Not DJ3510FOpen And BF_AA_Fonte = 1) Or Not DJ3510AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ3510FOpen And BF_AA_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf ((Not DJ3510DOpen)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If ((Not DJ3510GOpen And BF_BB_Fonte = 2) Or Not DJ3510BOpen) Then
+    FonteBUSB = 2 'A
+ElseIf ((Not DJ3510GOpen And BF_AA_Fonte = 1)) Then
+    FonteBUSB = 1 'B
+ElseIf ((Not DJ3510EOpen)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB) Then
+        DJ3510CPerm = CheckParal3510("52C")
+        DJ3510CObs = "Permitido Paralelismo Momentâneo - Mesma fonte"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3 And FonteBUSB <> 3) And Not DJ3001EOpen) Then
+        DJ3510CPerm = CheckParal3510("52C")
+        DJ3510CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    ElseIf ((FonteBUSA <> FonteBUSB)) Then
+        DJ3510CPerm = CheckHG3510("")
+        DJ3510CObs = "Paralelismo HULLGenerator"
+    End If
+End If
+
+
+    
+'52D
+DJ3510DPerm = False
+If (HULLGA) Then
+    If (Not BUS3510A) Then
+        DJ3510DPerm = True
+    End If
+    If (DJ3510COpen And BusA1fonte Or (Not DJ3510COpen And PN1fonte)) Then
+        DJ3510DPerm = CheckHG3510("")
+        DJ3510DObs = "Paralelismo HULLGenerator"
+    End If
+End If
+
+'52E
+DJ3510EPerm = False
+If (HULLGB) Then
+    If (Not BUS3510B) Then
+        DJ3510EPerm = True
+    End If
+    If (DJ3510COpen And BusB1fonte Or (Not DJ3510COpen And PN1fonte)) Then
+        DJ3510EPerm = CheckHG3510("")
+        DJ3510EObs = "Paralelismo HULLGenerator"
+    End If
+End If
+
+'Permissivo 52F
+DJ3510FPerm = False
+If (BF_AA_30023510Send And Not BUS3510A Or (Not BF_AA_30023510Send And DJ3002FOpen)) Then 'Barra A morta
+    DJ3510FPerm = True
+End If
+If (BF_AA_30023510Send And ((BusA1fonte And DJ3510COpen) Or (PN1fonte And Not DJ3510COpen))) Then
+    If (Not DJ3510AOpen And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3510FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3510FPerm = CheckParal3510("52F")
+    ElseIf (Not DJ3510AOpen And BF_AA_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ3510FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3510FPerm = CheckParal3510("52F")
+    ElseIf (Not DJ3510DOpen) Then
+        'Paralelismo momentaneo
+        DJ3510FPerm = CheckHG3510("")
+        DJ3510FObs = "Paralelismo HULLGenerator A"
+    End If
+    If (Not DJ3510COpen) Then
+        If (Not DJ3510BOpen And BF_AA_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3510FPerm = CheckParal3510("52F")
+        ElseIf (Not DJ3510BOpen And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3510FPerm = CheckParal3510("52F")
+        ElseIf (Not DJ3510EOpen) Then
+            'Paralelismo momentaneo
+            DJ3510FPerm = CheckHG3510("")
+            DJ3510FObs = "Paralelismo HULLGenerator B"
+        ElseIf (Not DJ3510GOpen And BF_AA_Fonte = 2 And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+            DJ3510FPerm = CheckParal3510("52F")
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Trafos Sincronizados"
+        ElseIf (Not DJ3510GOpen And BF_AA_Fonte = 2 And BF_BB_Fonte = 2) Then
+            DJ3510FPerm = CheckParal3510("52F")
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Mesma fonte"
+        ElseIf (Not DJ3510GOpen And BF_AA_Fonte = 1 And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            DJ3510FPerm = CheckParal3510("52F")
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Trafos Sincronizados"
+        ElseIf (Not DJ3510GOpen And BF_AA_Fonte = 1 And BF_BB_Fonte = 1) Then
+            DJ3510FPerm = CheckParal3510("52F")
+            DJ3510FObs = "Permitido Paralelismo Momentâneo - BF com PN5143003 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52G
+DJ3510GPerm = False
+If (BF_BB_30033510Send And Not BUS3510B Or (Not BF_BB_30033510Send And DJ3003GOpen)) Then 'Barra A morta
+    DJ3510GPerm = True
+End If
+If (BF_BB_30033510Send And ((BusB1fonte And DJ3510COpen) Or (PN1fonte And Not DJ3510COpen))) Then
+    If (Not DJ3510BOpen And BF_BB_Fonte = 1 And (Not DJ3001EOpen)) Then
+        'Paralelismo momentaneo
+        DJ3510GObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ3510GPerm = CheckParal3510("52G")
+    ElseIf (Not DJ3510BOpen And BF_BB_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ3510GObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ3510GPerm = CheckParal3510("52G")
+    ElseIf (Not DJ3510EOpen) Then
+        'Paralelismo momentaneo
+        DJ3510GPerm = CheckHG3510("")
+        DJ3510GObs = "Paralelismo HULLGenerator B"
+    End If
+    If (Not DJ3510COpen) Then
+        If (Not DJ3510AOpen And BF_BB_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ3510GPerm = CheckParal3510("52G")
+        ElseIf (Not DJ3510AOpen And BF_BB_Fonte = 2 And (Not DJ3001EOpen)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ3510GPerm = CheckParal3510("52G")
+        ElseIf (Not DJ3510DOpen) Then
+            DJ3510GPerm = CheckHG3510("")
+            DJ3510GObs = "Paralelismo HULLGenerator A"
+        ElseIf (Not DJ3510FOpen And BF_BB_Fonte = 2 And BF_AA_Fonte = 1 And (Not DJ3001EOpen)) Then
+            DJ3510GPerm = CheckParal3510("52G")
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Trafos Sincronizados"
+        ElseIf (Not DJ3510FOpen And BF_BB_Fonte = 2 And BF_AA_Fonte = 2) Then
+            DJ3510GPerm = CheckParal3510("52G")
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Mesma fonte"
+        ElseIf (Not DJ3510FOpen And BF_BB_Fonte = 1 And BF_AA_Fonte = 2 And (Not DJ3001EOpen)) Then
+            DJ3510GPerm = CheckParal3510("52G")
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Trafos Sincronizados"
+        ElseIf (Not DJ3510FOpen And BF_BB_Fonte = 1 And BF_AA_Fonte = 1) Then
+            DJ3510GPerm = CheckParal3510("52G")
+            DJ3510GObs = "Permitido Paralelismo Momentâneo - BF com PN5143002 - Mesma fonte"
+        End If
+    End If
+End If
+
+
+
+End Sub
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - PN8501
+
+Public Sub SeletorPN8501() 'Alterar
+
+Dim Title As String
+Dim ArrayPM() As Variant
+Dim ArrayDJ() As Variant
+Dim ArrayVar() As Variant
+
+ArrayPM = Array("Paral. Moment", "Normal", "Paral. EGCP") 'Alterar
+ArrayDJ = Array("52A", "52B", "52C", "52E", "52F") 'Alterar
+ArrayVar = Array(PN8501Paral, PN8501SeletorDJ) 'Alterar
+Title = "PN-5148501" 'Alterar
+
+If Not reset Then
+    tempArr = SelectPM(Title, ArrayPM, ArrayDJ, ArrayVar)
+    PN8501Paral = tempArr(0) 'Alterar
+    PN8501SeletorDJ = tempArr(1) 'Alterar
+    Call RotinaUpdateSave
+End If
+
+ArrayPM = Array("P.M.", "Normal", "EGCP") 'Alterar
+Call atualizaPMDesign(Title, ArrayPM, ArrayDJ, PN8501Paral, PN8501SeletorDJ) 'Alterar
+
+End Sub
+
+
+Public Function CheckEGCP8501(disjuntor As String)
+
+If (disjuntor = "" And PN8501Paral = 2) Then
+CheckEGCP8501 = True
+Else: CheckEGCP8501 = False
+End If
+
+End Function
+Public Function CheckParal8501(disjuntor As String)
+ArrayDJs = Array("52A", "52B", "52C", "52E", "52F")
+
+posArray = FindIndex(disjuntor, ArrayDJs)
+If (posArray <> PN8501SeletorDJ And PN8501Paral = 0) Then
+CheckParal8501 = True
+Else
+CheckParal8501 = False
+End If
+
+End Function
+
+Sub AtualizaPN8501()
+
+DJ8501AObs = ""
+DJ8501BObs = ""
+DJ8501CObs = ""
+DJ8501DObs = ""
+DJ8501EObs = ""
+DJ8501FObs = ""
+
+' Verifica se BF está alimentado e qual fonte.
+BF_AB_Fonte = 0
+If (BF_AB_85013501Receive And Not DJ3501FOpen And BUS3501B And Not DJ3501BOpen) Then
+    BF_AB_Fonte = 2 'B
+ElseIf (BF_AB_85013501Receive And Not DJ3501FOpen And BUS3501B And BUS3501A And Not DJ3501COpen And Not DJ3501AOpen) Then
+    BF_AB_Fonte = 1 'A
+ElseIf (BF_AB_85013501Receive And Not DJ3501FOpen And BUS3501B And BUS3501A And Not DJ3501COpen And Not DJ3501DOpen) Then
+    BF_AB_Fonte = 3 'INDEFINIDA
+
+End If
+BF_BA_Fonte = 0
+If (BF_BA_85013501Receive And Not DJ3501EOpen And BUS3501A And Not DJ3501AOpen) Then
+    BF_BA_Fonte = 1 'A
+ElseIf (BF_BA_85013501Receive And Not DJ3501EOpen And BUS3501A And BUS3501B And Not DJ3501COpen And Not DJ3501BOpen) Then
+    BF_BA_Fonte = 2 'B
+ElseIf (BF_BA_85013501Receive And Not DJ3501EOpen And BUS3501A And Not DJ3501DOpen) Then
+    BF_BA_Fonte = 3 'INDEFINIDA
+End If
+
+'Verifica se tem 1 fonte na barra
+BusA1fonte = False
+BusA2fonte = False
+If (Not DJ8501AOpen Or (BF_AB_85013501Receive And Not DJ8501EOpen)) Then
+    If (Not DJ8501AOpen And (BF_AB_85013501Receive And Not DJ8501EOpen)) Then
+        BusA2fonte = True
+    Else
+        BusA1fonte = True
+    End If
+End If
+BusB1fonte = False
+BusB2fonte = False
+If (Not DJ8501BOpen Or Not DJ8501DOpen Or Not DJ8501GOpen Or (BF_BA_85013501Receive And Not DJ8501FOpen)) Then
+    If (Not DJ8501BOpen And Not DJ8501DOpen) Then
+        BusB2fonte = True
+    ElseIf (Not DJ8501BOpen And (BF_BA_85013501Receive And Not DJ8501FOpen)) Then
+        BusB2fonte = True
+    ElseIf (Not DJ8501DOpen And (BF_BA_85013501Receive And Not DJ8501FOpen)) Then
+        BusB2fonte = True
+    Else
+        BusB1fonte = True
+    End If
+End If
+
+'Verifica quant fonte PN - Tie Fechado
+PN1fonte = False
+PN2fonte = False
+If (Not DJ8501COpen And (BusA1fonte Or BusB1fonte)) Then
+    If (Not DJ8501COpen And (BusA2fonte Or BusB2fonte) Or (BusA1fonte And BusB1fonte)) Then
+        PN2fonte = True
+        Else
+            PN1fonte = True
+    End If
+End If
+ 
+'52A
+DJ8501APerm = False
+If (TF3502A And Not BUS8501A) Then
+    DJ8501APerm = True
+End If
+If (TF3502A And (DJ8501COpen And BusA1fonte) Or (Not DJ8501COpen And PN1fonte)) Then
+    If (Not DJ8501EOpen And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        DJ8501APerm = CheckParal8501("52A")
+        DJ8501AObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+    ElseIf (Not DJ8501EOpen And BF_AB_Fonte = 1) Then
+        DJ8501APerm = CheckParal8501("52A")
+        DJ8501AObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+    End If
+    If (Not DJ8501COpen) Then  'Tie fechado
+        If (Not DJ8501DOpen) Then
+            DJ8501APerm = CheckEGCP8501("")
+            DJ8501AObs = "Paralelismo GE-TF"
+        ElseIf (BUS3510MesmaFonte And Not DJ8501BOpen) Then 'Paralelismo de TFs
+            DJ8501APerm = CheckParal8501("52A")
+            DJ8501AObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ8501FOpen And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ8501APerm = CheckParal8501("52A")
+            DJ8501AObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501FOpen And BF_AB_Fonte = 1) Then
+            DJ8501APerm = CheckParal8501("52A")
+            DJ8501AObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'52B
+DJ8501BPerm = False
+If (TF3502B And Not BUS8501B) Then
+    DJ8501BPerm = True
+End If
+If (TF3502B And (DJ8501COpen And BusB1fonte) Or (Not DJ8501COpen And PN1fonte)) Then
+    If (Not DJ8501DOpen) Then
+        DJ8501BPerm = CheckEGCP8501("")
+        DJ8501BObs = "Paralelismo GE-TF"
+    ElseIf (Not DJ8501FOpen And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        DJ8501BPerm = CheckParal8501("52B")
+        DJ8501BObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+    ElseIf (Not DJ8501FOpen And BF_BA_Fonte = 2) Then
+        DJ8501BPerm = CheckParal8501("52B")
+        DJ8501BObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+    End If
+    If (Not DJ8501COpen) Then  'Tie fechado
+        If (BUS3510MesmaFonte And Not DJ8501AOpen) Then 'Paralelismo de TFs
+            DJ8501BPerm = CheckParal8501("52B")
+            DJ8501BObs = "Permitido Paralelismo Momentâneo - Trafos sincronizados"
+        ElseIf (Not DJ8501EOpen And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ8501BPerm = CheckParal8501("52B")
+            DJ8501BObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501EOpen And BF_AB_Fonte = 2) Then
+            DJ8501BPerm = CheckParal8501("52B")
+            DJ8501BObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52C
+
+Dim FonteBUSA As Integer
+Dim FonteBUSB As Integer
+
+If ((Not DJ8501EOpen And BF_AB_Fonte = 1) Or Not DJ8501AOpen) Then
+    FonteBUSA = 1 'A
+ElseIf ((Not DJ8501EOpen And BF_AB_Fonte = 2)) Then
+    FonteBUSA = 2 'B
+ElseIf ((Not DJ8501EOpen And BF_AB_Fonte = 3)) Then
+    FonteBUSA = 3 'indefinida
+End If
+
+If ((Not DJ8501FOpen And BF_BA_Fonte = 2) Or Not DJ8501BOpen) Then
+    FonteBUSB = 2 'A
+ElseIf ((Not DJ8501FOpen And BF_AB_Fonte = 1)) Then
+    FonteBUSB = 1 'B
+ElseIf (Not DJ8501DOpen Or (Not DJ8501FOpen And BF_BA_Fonte = 3)) Then
+    FonteBUSB = 3 'indefinida
+End If
+
+
+DJ8501CPerm = False
+If (Not BUS8501A Or Not BUS8501B) Then 'Barra A ou B morta
+    DJ8501CPerm = True
+End If
+If (BusA1fonte And BusB1fonte) Then
+    If (FonteBUSA = FonteBUSB And FonteBUSA <> 3 And FonteBUSB <> 3) Then
+        DJ8501CPerm = CheckParal8501("52C")
+        DJ8501CObs = "Permitido Paralelismo Momentâneo - Mesma fonte"
+    ElseIf ((FonteBUSA <> FonteBUSB And FonteBUSA <> 3 And FonteBUSB <> 3) And BUS3510MesmaFonte) Then
+        DJ8501CPerm = CheckParal8501("52C")
+        DJ8501CObs = "Permitido Paralelismo Momentâneo - Fontes sincronizadas"
+    ElseIf ((FonteBUSA <> FonteBUSB And Not DJ8501DOpen)) Then
+        DJ8501CPerm = CheckEGCP8501("")
+        DJ8501CObs = "Paralelismo com GE"
+    End If
+End If
+
+
+'52D
+DJ8501DPerm = False
+If (GEmergencia) Then
+    If (Not BUS8501B) Then
+        DJ8501DPerm = True
+    End If
+    If (DJ8501COpen And BusB1fonte Or (Not DJ8501COpen And PN1fonte)) Then
+        DJ8501DPerm = CheckEGCP8501("")
+        DJ8501DObs = "Paralelismo GE"
+    End If
+End If
+
+'Permissivo 52E
+DJ8501EPerm = False
+If (BF_AB_85013501Receive And Not BUS8501A Or (Not BF_AB_85013501Receive And DJ3501FOpen)) Then 'Barra A morta
+    DJ8501EPerm = True
+End If
+If (BF_AB_85013501Receive And ((BusA1fonte And DJ8501COpen) Or (PN1fonte And Not DJ8501COpen))) Then
+    If (Not DJ8501AOpen And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ8501EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ8501EPerm = CheckParal8501("52E")
+    ElseIf (Not DJ8501AOpen And BF_AB_Fonte = 1) Then
+        'Paralelismo momentaneo
+        DJ8501EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ8501EPerm = CheckParal8501("52E")
+    End If
+    If (Not DJ8501COpen) Then
+        If (Not DJ8501BOpen And BF_AB_Fonte = 2) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ8501EPerm = CheckParal8501("52E")
+        ElseIf (Not DJ8501BOpen And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ8501EPerm = CheckParal8501("52E")
+        ElseIf (Not DJ8501DOpen) Then
+            'Paralelismo momentaneo
+            DJ8501EPerm = CheckEGCP8501("")
+            DJ8501EObs = "Paralelismo com GE"
+        ElseIf (Not DJ8501FOpen And BF_AB_Fonte = 2 And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ8501EPerm = CheckParal8501("52E")
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501FOpen And BF_AB_Fonte = 2 And BF_BA_Fonte = 2) Then
+            DJ8501EPerm = CheckParal8501("52E")
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        ElseIf (Not DJ8501FOpen And BF_AB_Fonte = 1 And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ8501EPerm = CheckParal8501("52E")
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501FOpen And BF_AB_Fonte = 1 And BF_BA_Fonte = 1) Then
+            DJ8501EPerm = CheckParal8501("52E")
+            DJ8501EObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52F
+DJ8501FPerm = False
+If (BF_BA_85013501Receive And Not BUS8501B Or (Not BF_BA_85013501Receive And DJ3501EOpen)) Then 'Barra A morta
+    DJ8501FPerm = True
+End If
+If (BF_BA_85013501Receive And ((BusB1fonte And DJ8501COpen) Or (PN1fonte And Not DJ8501COpen))) Then
+    If (Not DJ8501BOpen And BF_BA_Fonte = 1 And (BUS3510MesmaFonte)) Then
+        'Paralelismo momentaneo
+        DJ8501FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+        DJ8501FPerm = CheckParal8501("52F")
+    ElseIf (Not DJ8501BOpen And BF_BA_Fonte = 2) Then
+        'Paralelismo momentaneo
+        DJ8501FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+        DJ8501FPerm = CheckParal8501("52F")
+    ElseIf (Not DJ8501DOpen) Then
+        'Paralelismo momentaneo
+        DJ8501FPerm = CheckEGCP8501("")
+        DJ8501FObs = "Paralelismo com GE"
+    End If
+    If (Not DJ8501COpen) Then
+        If (Not DJ8501AOpen And BF_BA_Fonte = 1) Then 'Mesmo Trafo
+            'Paralelismo de Trafos - mesma fonte
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - Mesmo Trafo"
+            DJ8501FPerm = CheckParal8501("52F")
+        ElseIf (Not DJ8501AOpen And BF_BA_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            'Paralelismo de Trafos - mesma fonte
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - Trafos Sincronizados"
+            DJ8501FPerm = CheckParal8501("52F")
+        ElseIf (Not DJ8501EOpen And BF_BA_Fonte = 2 And BF_AB_Fonte = 1 And (BUS3510MesmaFonte)) Then
+            DJ8501FPerm = CheckParal8501("52F")
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501EOpen And BF_BA_Fonte = 2 And BF_AB_Fonte = 2) Then
+            DJ8501FPerm = CheckParal8501("52F")
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        ElseIf (Not DJ8501EOpen And BF_BA_Fonte = 1 And BF_AB_Fonte = 2 And (BUS3510MesmaFonte)) Then
+            DJ8501FPerm = CheckParal8501("52F")
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Trafos Sincronizados"
+        ElseIf (Not DJ8501EOpen And BF_BA_Fonte = 1 And BF_AB_Fonte = 1) Then
+            DJ8501FPerm = CheckParal8501("52F")
+            DJ8501FObs = "Permitido Paralelismo Momentâneo - BF com PN5143501 - Mesma fonte"
+        End If
+    End If
+End If
+
+'Permissivo 52G
+DJ8501GPerm = False
+If (DJ8501BOpen And DJ8501DOpen And DJ8501FOpen And ((DJ8501EOpen And DJ8501AOpen) Or DJ8501COpen)) Then
+    DJ8501GPerm = True
+End If
+
+End Sub
+
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Modulo - Premissas
+
+' DJ Status => ON-Red, OFF-Green, Indisp-Grey
+' Bus Status => ON-Red, OFF-Green
+'
+'
+'
+'
+'
+'
+'
+'
+'
+'
+'
+
+Sub selectshapes()
+For Count = 1 To ActiveSheet.Shapes.Count
+'MsgBox (ActiveSheet.Shapes(Count).Name)
+If (ActiveSheet.Shapes(Count).Name Like "BUS3510B") Then
+ActiveSheet.Shapes.Range("BUS3510B").Line.ForeColor.RGB = vbYellow
+'ActiveSheet.Shapes(Count).Fill.ForeColor.RGB = &HFF&
+line_array = line_array & Count & ", "
+End If
+Next Count
+End Sub
+
+Disjuntores	Loc	Open/OFF	Permissivo	Obs		Elementos	Boolean
+DJ8501A	VERDADEIRO	VERDADEIRO	FALSO	Paralelismo GE-TF		TGA	VERDADEIRO
+DJ8501B	VERDADEIRO	VERDADEIRO	FALSO	Paralelismo GE-TF		TGB	FALSO
+DJ8501C	VERDADEIRO	FALSO	FALSO			TGC	FALSO
+DJ8501D	VERDADEIRO	FALSO	FALSO	Paralelismo GE		TGD	FALSO
+DJ8501E	VERDADEIRO	VERDADEIRO	VERDADEIRO			HULLGA	FALSO
+DJ8501F	VERDADEIRO	VERDADEIRO	VERDADEIRO			HULLGB	FALSO
+DJ8501G	VERDADEIRO	VERDADEIRO	FALSO			Gauxiliar	VERDADEIRO
+DJ3501A	VERDADEIRO	VERDADEIRO	FALSO	Paralelismo GA-TF		GEmergencia	VERDADEIRO
+DJ3501B	VERDADEIRO	VERDADEIRO	FALSO	Paralelismo GA-TF		ShoreSupply	FALSO
+DJ3501C	VERDADEIRO	FALSO	FALSO			BUS8501A	VERDADEIRO
+DJ3501D	VERDADEIRO	FALSO	FALSO	Paralelismo GA		BUS8501B	VERDADEIRO
+DJ3501E	VERDADEIRO	VERDADEIRO	VERDADEIRO			GELine	VERDADEIRO
+DJ3501F	VERDADEIRO	VERDADEIRO	VERDADEIRO			SSLine	FALSO
+DJ3510A	VERDADEIRO	VERDADEIRO	FALSO			BF_AB_85013501	FALSO
+DJ3510B	VERDADEIRO	VERDADEIRO	FALSO			BF_BA_85013501	FALSO
+DJ3510C	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3501A	VERDADEIRO
+DJ3510D	VERDADEIRO	VERDADEIRO	FALSO			BUS3501B	VERDADEIRO
+DJ3510E	VERDADEIRO	VERDADEIRO	FALSO			GAuxiliarLine	VERDADEIRO
+DJ3510F	VERDADEIRO	VERDADEIRO	VERDADEIRO			HULLGALine	FALSO
+DJ3510G	VERDADEIRO	VERDADEIRO	VERDADEIRO			HULLGBLine	FALSO
+DJ3510TF502A	VERDADEIRO	VERDADEIRO	FALSO			TF3502A	FALSO
+DJ3510TF502B	VERDADEIRO	VERDADEIRO	FALSO			TF3502B	FALSO
+DJ3510TF503A	VERDADEIRO	VERDADEIRO	FALSO			TF3503A	FALSO
+DJ3510TF503B	VERDADEIRO	VERDADEIRO	FALSO			TF3503B	FALSO
+DJ3504A	VERDADEIRO	VERDADEIRO	FALSO			BUS3510A	FALSO
+DJ3504B	VERDADEIRO	VERDADEIRO	FALSO			BUS3510B	FALSO
+DJ3504C	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3504A	FALSO
+DJ3504E	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3504B	FALSO
+DJ3507A	VERDADEIRO	VERDADEIRO	FALSO			BUS3507A	FALSO
+DJ3507B	VERDADEIRO	VERDADEIRO	FALSO			BUS3507B	FALSO
+DJ3507C	VERDADEIRO	VERDADEIRO	VERDADEIRO			BF_AA_30043504	FALSO
+DJ3507F	VERDADEIRO	VERDADEIRO	VERDADEIRO			BF_BB_30073507	FALSO
+DJ3004A	VERDADEIRO	VERDADEIRO	FALSO			BUS3004A	FALSO
+DJ3004B	VERDADEIRO	VERDADEIRO	FALSO			BUS3004B	FALSO
+DJ3004C	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3007A	FALSO
+DJ3004E	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3007B	FALSO
+DJ3007A	VERDADEIRO	VERDADEIRO	FALSO			TGALine	VERDADEIRO
+DJ3007B	VERDADEIRO	VERDADEIRO	FALSO			TGBLine	FALSO
+DJ3007C	VERDADEIRO	VERDADEIRO	VERDADEIRO			TGCLine	FALSO
+DJ3007F	VERDADEIRO	VERDADEIRO	VERDADEIRO			TGDLine	FALSO
+DJ3001A	VERDADEIRO	FALSO	VERDADEIRO	Sincronismo com a Barra		BUS3001A	VERDADEIRO
+DJ3001B	VERDADEIRO	VERDADEIRO	FALSO			BUS3001B	VERDADEIRO
+DJ3001C	VERDADEIRO	VERDADEIRO	FALSO			TF501A	FALSO
+DJ3001D	VERDADEIRO	VERDADEIRO	FALSO			TF501B	FALSO
+DJ3001E	VERDADEIRO	FALSO	FALSO	Sincronismo com gerador que está sozinho na Barra		TF001A	FALSO
+DJ3001TF501A	VERDADEIRO	VERDADEIRO	VERDADEIRO			TF001B	FALSO
+DJ3001TF501B	VERDADEIRO	VERDADEIRO	VERDADEIRO			TF002A	FALSO
+DJ3001TF001A	VERDADEIRO	VERDADEIRO	VERDADEIRO			TF002B	FALSO
+DJ3001TF001B	VERDADEIRO	VERDADEIRO	VERDADEIRO			TF003A	FALSO
+DJ3001TF002A	VERDADEIRO	VERDADEIRO	VERDADEIRO			TF003B	FALSO
+DJ3001TF002B	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3002A	FALSO
+DJ3001TF003A	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3002B	FALSO
+DJ3001TF003B	VERDADEIRO	VERDADEIRO	VERDADEIRO			BUS3003A	FALSO
+DJ3002A	VERDADEIRO	VERDADEIRO	FALSO			BUS3003B	FALSO
+DJ3002B	VERDADEIRO	VERDADEIRO	FALSO			BF_AA_30023510	FALSO
+DJ3002C	VERDADEIRO	VERDADEIRO	VERDADEIRO			BF_BB_30033510	FALSO
+DJ3002F	VERDADEIRO	VERDADEIRO	VERDADEIRO			PN8501Paral	1
+DJ3003A	VERDADEIRO	VERDADEIRO	FALSO			PN8501SeletorDJ	2
+DJ3003B	VERDADEIRO	VERDADEIRO	FALSO			PN3501Paral	1
+DJ3003C	VERDADEIRO	VERDADEIRO	FALSO			PN3501SeletorDJ	2
+DJ3003G	VERDADEIRO	VERDADEIRO	VERDADEIRO			PN3510Paral	1
+						PN3510SeletorDJ	2
+						PN3504Paral	1
+						PN3504SeletorDJ	2
+						PN3507Paral	1
+						PN3507SeletorDJ	2
+						PN3004Paral	1
+						PN3004SeletorDJ	2
+						PN3007Paral	1
+						PN3007SeletorDJ	2
+						PN3001TIE	1
+						PN3002Paral	1
+						PN3002SeletorDJ	2
+						PN3003Paral	1
+						PN3003SeletorDJ	2
+
+
+Nome do Objeto	Tipo	Posição Esquerda	Posição Superior	Largura	Altura	Texto
+Rectangle 46	1	50,13685226	545,2913208	1209,482544	94,36708832	
+TextBox 18006	17	1087,613281	50,40708542	46,58606339	36,78724289	"TG-D
+33MW"
+TextBox 18002	17	860,8927612	50,52527618	45,47889709	36,78724289	"TG-B
+33MW"
+TextBox 17998	17	458,25	50,25	51	36,75	"TG-C
+33MW"
+TextBox 17853	17	218,278656	50,72763824	46,6192131	36,78724289	"TG-A
+33MW"
+Rectangle 1	1	1264,64624	103,2677917	138,7420502	339,9499207	
+Rectangle 2	1	49,25196838	102,4552765	1208,269897	99,37716675	
+Rectangle 3	1	956,8694458	313,6331482	219,0919647	93,61141968	
+Rectangle 4	1	918,8424683	822,3898926	338,3855896	92,98094177	
+GauxiliarLine	9	1110,869507	804,9973145	0,02992126	24,56401634	
+Rectangle 22	1	984,5947876	872,0443115	180,1848755	33,58708572	PN-5143501
+Rectangle 23	1	50,33968353	822,2420654	338,5729065	93,09606171	
+GELine	9	185,4246521	803,7975464	0,021732284	25,67708588	
+SSLine	9	268,4416504	800,6602173	0	36,10078812	
+ShoreSupply	1	257,072998	778,0870972	22,73732376	22,57314873	SS
+Rectangle 44	1	133,9249573	872,0990601	179,4569244	49,34440994	PN-5148501
+CommandButton1	12	615	700,5	63,75	30	
+TF3502B	6	312,2866211	633,6748047	929,6778564	196,8315735	
+BF_BA_85013501	6	359,0278015	801,8191528	585,3514404	28,02897644	
+TF3502A	6	66,07779694	631,7019653	946,4716797	198,0940094	
+BF_AB_85013501	6	76,10559082	907,4343872	1157,419678	83,62417603	
+HULLGALine	9	493,4972534	523,1755981	0,290787399	29,86598396	
+HULLGBLine	9	802,1832275	523,1455078	0,287401587	32,0326767	
+Rectangle 17424	1	411,1350403	821,8051147	228,2174072	94,22023773	
+BUS3504B	6	559,5365601	855,0129395	69,83716583	16,04661369	
+Rectangle 17428	1	433,0420532	876,1560669	176,9172516	49,52070999	PN-5143504
+BUS3504A	6	419,5963135	855,048645	116,5636978	15,97062969	
+DJ3504C	1	536,1599731	859,6469116	22,31952667	21,92621994	52C
+Rectangle 17437	1	662,0322266	823,0930176	232,3755951	92,82740021	
+BUS3507A	6	671,7762451	856,0975342	70,12299347	15,29787445	
+Rectangle 17441	1	685,975647	875,1824341	179,1760559	31,37692833	PN-5143507
+BUS3507B	6	765,6430664	855,130188	117,8927536	15,87409496	
+DJ3507C	1	742,3656006	859,5999146	22,32834625	21,92621994	52C
+TF3503A	6	475,8029785	632,5709229	211,1229858	198,5046387	
+TF3503B	6	612,3881836	633,1611328	210,5078735	197,4948883	
+TGCLine	9	448,7895203	83,93354034	0	28,58275604	
+TGBLine	9	849,6566772	84,84354401	0	28,55629921	
+TGALine	9	209,5208588	83,98039246	0	28,58275604	
+TGDLine	9	1077,547119	84,94700623	0	28,58275604	
+DJ3001A	1	198,7859039	112,901886	22,0585041	24,53181076	52A
+DJ3001B	1	838,6829834	113,8625183	23,19448853	24,53173256	52B
+DJ3001C	1	438,0259094	112,8550415	22,08716583	24,53173256	52C
+DJ3001D	1	1066,812134	113,9414978	22,0585041	24,53181076	52D
+TF501A	6	74,89141846	192,0326843	22,35551262	360,767334	
+Rectangle 17493	1	555,7147827	540,8112793	180,0937805	49,76496124	PN-5143510
+Rectangle 17494	1	559,2671509	99,19480133	180,0937805	44,23244095	PN-5143001
+Rectangle 17495	1	133,3918152	315,3093567	219,5821228	92,81125641	
+Rectangle 17499	1	174,6846466	308,3748779	130,8843231	35,09023666	PN-5143004
+Rectangle 17508	1	1001,148987	308,7889709	127,5906296	31,64275551	PN-5143007
+TF001A	6	147,6337738	192,4633789	836,2364502	129,2020416	
+DJ3007A	1	972,1491089	321,3729248	22,43842506	23,65984344	52A
+BF_BB_30073507	6	868,3772583	399,9023743	279,8086548	430,5091248	
+BF_AA_30043504	6	158,9056702	400,9307861	275,0494385	430,1442566	
+Rectangle 17537	1	378,2102356	313,7839355	244,5985107	94,24125671	
+Rectangle 17541	1	434,0982666	308,6895142	127,9180298	34,95196915	PN-5143002
+DJ3001TF501A	1	74,76212311	169,885437	22,85629845	22,1472435	"TF-A
+501"
+TF002A	6	391,7753601	192,2119751	21,11252022	128,4572449	
+Rectangle 17579	1	683,5682373	315,7585754	248,3821259	91,77314758	
+Rectangle 17583	1	746,3417358	309,2099304	126,9844894	31,69811058	PN-5143003
+TF003A	6	584,8844604	191,9095306	135,9888153	129,9542542	
+TF002B	6	595,5584106	192,1760559	123,2374039	128,1597595	
+TF003B	6	897,3180542	192,155899	21,9440155	129,2503967	
+TF501B	6	1211,783203	191,7751923	21,83669281	360,6907959	
+TF001B	6	325,6120605	192,4004669	833,3579712	129,7491302	
+DJ3004B	1	314,8966064	322,0404663	23,02716446	23,56968498	52B
+DJ3001TF001B	1	1128,820923	169,5388947	22,81622124	22,86070824	"TF-B
+001"
+Button 2	8	1279,5	226,5	111	23,25	BlackOut
+Button 4	8	1281	123	111	22,5	Condição 1
+TGA	6	147,201416	51,83417511	76,72732544	31,16669273	
+DJ3001TF501B	1	1210,331421	169,135437	21,86732292	22,63976288	"TF-B
+501"
+HULLGA	6	433,2118835	491,7298279	74,93039703	31,44574738	
+HULLGB	6	739,4886475	491,6997681	77,73165131	31,44574738	
+LimiteHull	6	7,339370251	467,4815674	1321,284058	38,46448898	
+TGC	6	388,9671631	51,29267883	74,39653778	31,16669273	
+TGB	6	787,4111938	51,63180923	77,8343277	31,16669273	
+TGD	6	1015,319397	51,51362228	76,64661407	31,16669273	
+TextBox 18017	17	261,9499207	137,9562988	40,83582687	13,43283463	13800 V
+TextBox 18018	17	967,3092651	137,060791	40,83582687	13,43283463	13800 V
+TextBox 18019	17	840,5700684	346,5275574	40,83582687	13,43283463	6600 V
+TextBox 18020	17	429,9978027	346,3687439	40,83582687	13,43283463	6600 V
+TextBox 18022	17	1022,091003	577,3423462	40,83582687	13,43283463	6600 V
+TextBox 18023	17	247,5713348	576,4468384	40,83582687	13,43283463	6600 V
+TextBox 18024	17	1001,764832	346,677948	40,83582687	13,43283463	480 V
+TextBox 18025	17	180,9261475	345,9415894	40,83582687	13,43283463	480 V
+TextBox 18026	17	104,9898453	218,3259125	40,83582687	37,25385666	"TF-001A
+4 MVA"
+TextBox 18027	17	1160,117065	219,0451202	40,83582687	37,25385666	"TF-001B
+4 MVA"
+TextBox 18028	17	416,2557373	214,9231567	40,83582687	37,25385666	"TF-002A
+11 MVA"
+TextBox 18029	17	608,4636841	212,7822876	40,83582687	37,25385666	"TF-003A
+11 MVA"
+TextBox 18030	17	654,2092896	213,1999969	40,83582687	37,25385666	"TF-002B
+11 MVA"
+TextBox 18031	17	854,4921875	214,726532	40,83582687	37,25385666	"TF-003B
+11 MVA"
+TextBox 18032	17	381,3921204	431,2980957	40,83582687	37,25385666	"515 A
+5,9 MVA"
+TextBox 18033	17	890,1675415	424,1855164	40,83582687	37,25385666	"515 A
+5,9 MVA"
+TextBox 18034	17	503,9780273	490,2076416	46,61936951	41,63023758	"HG-A
+7 MW"
+TextBox 18035	17	813,9362183	489,5603027	46,61936951	40,62700653	"HG-B
+7 MW"
+TextBox 18036	17	98,68677521	497,916626	40,83582687	37,25385666	"TF-501A
+14 MVA"
+TextBox 18037	17	1169,123047	497,7957458	40,83582687	37,25385666	"TF-501B
+14 MVA"
+TextBox 18038	17	173,7236938	705,4962158	40,83582687	37,25385666	"1416 A
+1,2 MVA"
+DJ3504B	1	602,006958	830,4286499	23,02700806	22,58976364	52B
+DJ3504E	1	424,1593628	831,0731201	20,77700806	22,43614197	52E
+DJ3504A	1	475,2037048	830,9391479	21,76110268	22,58976364	52A
+DJ3507A	1	674,7342529	831,0755615	23,04299164	22,43614197	52A
+DJ3507B	1	800,5377197	830,6560059	23,23622131	22,58976364	52B
+DJ3507F	1	856,5751343	830,411499	23,42732239	22,58976364	52F
+TextBox 18077	17	1093,425049	703,5168457	40,83582687	37,25385666	"1416 A
+1,2 MVA"
+TextBox 18078	17	508,6305542	671,5249634	40,83582687	37,25385666	"TF-503A
+4 MVA"
+TextBox 18079	17	746,9812622	671,7368774	40,83582687	37,25385666	"TF-503B
+4 MVA"
+TextBox 18080	17	490,3456726	855,5014038	40,83582687	13,43283463	480 V
+TextBox 18081	17	693,8432007	855,6434937	40,83582687	13,43283463	480 V
+DJ8501G	1	257,072998	830,132019	22,73732376	22,43889809	52G
+TextBox 18094	17	1175,221924	853,9984131	40,83582687	13,43283463	480 V
+GEmergencia	6	122,6755142	772,2058105	77,96401215	31,59173203	
+TextBox 18101	17	195,1581879	771,2572632	55,05228424	36,87015915	"GE-EMG
+2 MW"
+GAuxiliar	6	1046,712524	773,4055786	78,65567017	31,59173203	
+TextBox 18111	17	1120,321777	771,7819824	55,20055008	36,71661377	"GE-AUX
+2 MW"
+TextBox 18129	17	96,75424957	670,098877	40,83582687	37,25385666	"TF-502A
+5 MVA"
+TextBox 18130	17	1171,632568	669,583313	40,83582687	37,25385666	"TF-502B
+5 MVA"
+TextBox 18131	17	80,06606293	855,3860474	40,83582687	13,43283463	480 V
+TextBox 18132	17	363,1465454	782,5170288	40,83582687	37,25385666	"2125 A
+1,5 MW"
+TextBox 18133	17	380,9138489	969,8319702	40,83582687	37,25385666	"2125 A
+1,5 MW"
+TextBox 17949	17	889,8840332	970,3181152	40,83582687	37,25385666	"2125 A
+1,5 MW"
+TextBox 18048	17	888,8344727	782,3690796	40,83582687	37,25385666	"2125 A
+1,5 MW"
+DJ3004A	1	147,2927551	320,987793	22,4881897	22,4766922	52A
+DJ3001TF003A	1	584,5245972	169,7077942	22,13984299	22,20181084	"TF-A
+003"
+BF_AA_30023510	6	401,5923767	400,3330688	0,895433068	152,5716553	
+BF_BB_30033510	6	908,3933716	400,3444214	0,405826777	152,9194489	
+DJ3510G	1	896,8619385	553,0458374	22,75133896	23,94417381	DJ-G
+TextBox 17923	17	743,0563965	347,1073303	40,83582687	13,43283463	6600 V
+TextBox 17925	17	1089,754517	346,8199158	40,83582687	13,43283463	480 V
+PN-5143007PM	1	1049,759155	375,9344788	34,33582687	26,68070793	"Normal
+52C"
+TextBox 17942	17	269,4484253	345,8520508	40,83582687	13,43283463	480 V
+TextBox 17943	17	530,7888794	345,9433899	40,83582687	13,43283463	6600 V
+TextBox 17944	17	207,1622772	855,1575317	40,83582687	13,43283463	480 V
+TextBox 17945	17	561,09198	855,6434937	40,83582687	13,43283463	480 V
+TextBox 17946	17	768,4927368	856,1560059	40,83582687	13,43283463	480 V
+TextBox 17947	17	1040,257324	855,0591431	40,83582687	13,43283463	480 V
+Straight Connector 17980	9	258,4860535	193,0774841	0,085905515	25,19110298	
+Oval 17981	1	247,9218903	218,4718933	21,574646	23,69976425	M
+TextBox 17473	17	266,1647949	206,2135468	102,3231506	62,14157486	"M-B-1251002A
+M-B-5124001A
+M-B-UT-1251002-01A/C
+M-C-UT-1238001A
+"
+Straight Connector 17475	9	477,5300903	192,6973267	0,085905515	25,19110298	
+Oval 17983	1	468,4060669	218,0917358	20,13448906	23,69976425	M
+TextBox 17985	17	487,0327454	201,889679	94,84748077	56,68267822	"M-C-UC-1231001A/C
+M-C-UC-1231002A
+M-C-UC-1252001A
+M-UC-1225001A
+"
+BUS3001A	6	63,04480362	138,4674072	576,0787964	31,38779449	
+djMotorxx	1	467,9689636	169,2475586	20,4157486	23,43055153	"DJ
+Motor"
+DJ3001TF002A	1	391,0744019	169,2095337	21,92007828	22,99937057	"TF-A
+002"
+Straight Connector 18011	9	747,241272	192,7229919	0,085905515	25,19110298	
+Oval 18012	1	736,5836792	218,1174011	21,66803169	23,69976425	M
+TextBox 18013	17	756,7439575	201,358902	94,84748077	56,68267822	"M-C-UC-1231001B
+M-C-UC-1231002B/C
+M-C-UC-1252001B
+M-UC-1225001B
+"
+BUS3001B	6	661,0834351	138,1363831	580,1112061	32,34700775	
+djMotorxx	1	736,1466064	169,2732239	21,94929123	23,43055153	"DJ
+Motor"
+MotorModelo	6	987,1742554	169,2475586	117,5940933	93,10842896	
+DJ3001TF003B	1	896,7319946	169,2122803	22,51669312	22,94362259	"TF-B
+003"
+DJ3001TF002B	1	696,2080078	169,9742584	23,11495972	22,20181084	"TF-B
+002"
+PNModelo	6	169,0317383	377,9555969	64,76567078	87,83621979	
+Straight Connector 17551	9	298,6884155	399,8551941	0,085905515	25,19125938	
+TextBox 17554	17	267,9822083	423,7496033	64,04929352	32,00535583	PN-5143006
+djMotorxx	1	280,2792969	424,9300842	36,40535355	7,918346405	PAINEL
+BUS3004A	6	141,7033844	345,5298462	90,98039246	31,98283386	
+BUS3004B	6	255,1824341	346,3437805	86,06795502	30,3247242	
+djMotorxx	1	287,0970764	376,0985718	22,44598389	23,43039322	"DJ
+PN"
+DJ3004C	1	232,6837006	349,9200745	22,49866104	21,86283493	52C
+Straight Connector 17659	9	1007,241028	401,1089783	0,085905515	25,19125938	
+TextBox 17660	17	976,53479	425,0033875	64,04929352	32,00535583	PN-5143008
+djMotorxx	1	988,8319092	426,1838684	36,40535355	9,061338425	PAINEL
+djMotorxx	1	995,6496582	377,352356	22,44598389	23,43039322	"DJ
+PN"
+Straight Connector 18050	9	1112,695923	400,6658936	0,085905515	25,19125938	
+TextBox 18051	17	1081,989624	429,9338684	64,04929352	32,00535583	"PN-5143009
+PN-5143011"
+djMotorxx	1	1094,286743	425,7407837	36,40535355	7,918346405	PAINEL
+djMotorxx	1	1101,877563	376,9093018	21,67299271	23,43039322	"DJ
+PN"
+BUS3007A	6	968,505188	345,9007874	87,46535492	30,34716606	
+BUS3007B	6	1078,186646	345,2743225	84,78952789	31,31810951	
+DJ3007C	1	1055,970459	350,0892944	22,21629906	21,86283493	52C
+DJ3007F	1	1135,861206	377,0214233	23,82803154	22,88094521	52F
+DJ3007B	1	1136,280762	321,2512512	23,63669205	22,56685066	52B
+BUS3510B	6	661,7015991	577,279541	582,5667114	31,77252007	
+MotorModelo	6	961,0250244	608,657959	154,0570831	93,10842896	
+DJ3510TF503B	1	791,53302	609,3717041	22,81055069	23,78936958	"TF-B
+503"
+DJ3510E	1	791,6856079	555,1781616	22,28653526	22,29362297	52E
+BUS3510A	6	67,18976593	577,3567505	572,3272705	31,61417389	
+DJ3510TF502B	1	1211,832397	609,4475098	22,26779556	24,22732353	TF-B
+DJ3510B	1	1211,798096	552,4660034	22,26779556	23,79818916	DJ-B
+MotorModelo	6	321,3085938	608,232605	115,2770081	93,10842896	
+DJ3510TF502A	1	74,1915741	608,5246582	22,85629845	23,17732239	TF-A
+DJ3510A	1	74,59432983	552,7999878	22,67716599	23,94417381	DJ-A
+DJ3510F	1	390,6403198	552,9047241	21,9040947	23,94417381	DJ-F
+DJ3510TF503A	1	482,9735413	609,3390503	22,18551254	23,23188972	"TF-A
+503"
+DJ3510D	1	482,7336121	553,4080811	22,02787399	23,86070824	52D
+DJ3510C	1	639,5170288	582,5022583	22,26771736	22,29314995	52C
+BUS8501A	6	58,80102539	853,0144653	68,77535248	33,68858337	
+BUS8501B	6	150,4340973	852,7872925	230,347641	32,25354385	
+PNModelo	6	313,4093628	883,482666	64,76567078	88,33771515	
+DJ8501B	1	301,5248108	830,057312	22,73732376	22,43889809	52B
+DJ8501F	1	349,1077271	830,132019	22,73732376	22,43889809	52F
+DJ8501D	1	174,0779572	829,8154907	23,45370102	22,43889809	52D
+DJ8501E	1	65,23866272	885,5553589	22,73732376	21,87905502	52E
+PNModelo	6	80,53771973	883,7341919	65,48212433	100,7907104	
+DJ8501A	1	65,7148056	829,7959595	22,73732376	22,43889809	52A
+DJ8501C	1	127,5763779	858,8200073	22,60905457	21,61173248	52C
+BUS3501B	6	1169,2229	853,5706177	79,98496246	33,11251831	
+BUS3501A	6	929,3911133	852,874939	216,801651	33,05125809	
+PNModelo	6	933,7818604	885,9348145	68,35251617	87,55527496	
+DJ3501E	1	932,2388916	829,6658936	23,78299141	22,41984177	52E
+DJ3501A	1	999,4414673	829,6658936	23,36598396	22,41984177	52A
+DJ3501D	1	1099,703613	829,5613403	22,11196899	22,41984177	52D
+DJ3501F	1	1221,367554	886,0439453	22,86102295	21,87921333	52F
+DJ3501B	1	1220,59021	830,5063477	23,0865345	22,41984177	52B
+PNModelo	6	1162,467896	885,595459	68,35251617	99,79929352	
+DJ3501C	1	1146,192749	858,8203735	23,36614227	21,61181068	52C
+Button 5	8	1280,25	157,5	111,75	24	Condição 3
+Button 6	8	1279,5	191,25	111	23,25	Condição 8
+DJ3004E	1	147,5968475	378,4072571	22,61755943	22,5235424	52E
+djMotorxx	1	247,4848022	169,3207092	21,85590553	23,43055153	"DJ
+Motor"
+DJ3001TF001A	1	156,0761414	169,479599	21,85590553	22,98393631	"TF-A
+001"
+DJ3001E	1	639,4390259	142,1385803	21,86724472	23,15110207	52E
+BUS3002A	6	386,4435425	345,0267029	103,4870834	31,99669266	
+BUS3002B	6	511,7129211	345,0291443	101,213623	32,73622131	
+MotorModelo	6	435,3084106	377,2233887	114,6276398	93,10850525	
+DJ3002F	1	391,4376526	377,717804	22,10031509	22,61527634	52F
+DJ3002A	1	391,1335449	320,6691284	21,97094536	22,7477169	52A
+DJ3002C	1	489,9306335	350,1538696	21,78220558	22,13393784	52C
+MotorModelo	6	547,7285156	378,1065369	116,8776398	93,10850525	
+DJ3002B	1	584,6956177	320,3358154	22,310709	22,7477169	52B
+BUS3003A	6	692,3618164	346,5449524	104,5334625	30,7592907	
+BUS3003B	6	820,1494751	345,6678772	102,738266	32,31598282	
+DJ3003A	1	708,4726563	321,8638611	22,91984177	23,68409538	52A
+DJ3003C	1	796,8954468	351,221344	23,27913475	21,56968498	52C
+MotorModelo	6	670,4332275	377,3973083	96,28039551	92,03385925	
+MotorModelo	6	772,3776245	375,1919556	100,3980331	91,98314667	
+DJ3003G	1	896,4052124	377,7568359	23,19551086	22,58748055	52G
+DJ3003B	1	896,824646	321,406311	23,00417328	22,2735424	52B
+PN-5143003PM	1	791,0205688	376,8193665	34,33582687	26,68070793	"Normal
+52C"
+PN-5143002PM	1	483,0644836	376,3763733	33,56283569	26,68070793	"Normal
+52C"
+PN-5143004PM	1	226,8355103	376,4989014	34,33582687	26,68070793	"Normal
+52C"
+PN-5143001PM	1	634,0966797	169,1667786	34,33582687	27,82369995	"Normal
+"
+PN-5143510PM	1	633,8869019	607,6156006	34,21204758	27,57621956	"Normal
+52C"
+PN-5148501PM	1	122,0292892	828,0325928	34,15283585	27,77377892	"Normal
+52C"
+PN-5143504PM	1	529,9906006	828,0325928	33,53409576	27,77377892	"Normal
+52C"
+PN-5143507PM	1	736,7667847	828,3684082	34,18330765	27,77377892	"Normal
+52C"
+PN-5143501PM	1	1140,438843	827,2727051	34,18330765	27,77377892	"Normal
+52C"
+Group 17837	6	1276,272095	283,4889832	122,347168	19,71440887	
+Group 17838	6	1276,396118	309,3033752	122,347168	18,18952751	
+Group 17841	6	1276,335449	333,5666809	122,347168	19,52873993	
+Group 17845	6	1276,477539	358,0151062	122,347168	19,71433067	
+Group 17849	6	1276,619507	384,7293701	122,347168	18,18960571	
+Group 17852	6	1276,256958	409,0198364	122,347168	18,18960571	
+
+
+
