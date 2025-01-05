@@ -17,7 +17,7 @@ const Painel = ({ id, nome, altura, largura, topo, esquerda, numDisjuntores, esc
         const centroY = altura / 2;
         const initialDisjuntores = Array.from({ length: numDisjuntores }, (_, i) => ({
             id: `${id}-disjuntor-${i}`,
-            name: `Disjuntor ${i + 1}`,
+            name: `DJ ${i + 1}`,
             position: { x: espacamentoX * (i + 1), y: centroY },
             estado: 'aberto',
         }));
@@ -116,7 +116,6 @@ const Painel = ({ id, nome, altura, largura, topo, esquerda, numDisjuntores, esc
             const disjuntorX = newLeft + disjuntor.position.x;
             const disjuntorY = newTop + disjuntor.position.y;
 
-            // Verifica se os disjuntores estão dentro dos novos limites
             return (
                 disjuntorX >= newLeft &&
                 disjuntorX + escalaDisjuntores * 50 <= newLeft + newWidth &&
@@ -139,6 +138,14 @@ const Painel = ({ id, nome, altura, largura, topo, esquerda, numDisjuntores, esc
             onMouseDown={handleMouseDownDrag}
         >
             <h3 className="painel-titulo">{nome}</h3>
+            <Barra
+                tag={`${nome} - Barra`}
+                numNos={disjuntores.length || numDisjuntores}
+                orientacao={barra.orientacao}
+                escala={barra.escala}
+                posicao={{ topo: 0, esquerda: 0 }}
+                painelWidth={size.width}
+            />
             {disjuntores.map((disjuntor) => (
                 <Disjuntor
                     key={disjuntor.id}

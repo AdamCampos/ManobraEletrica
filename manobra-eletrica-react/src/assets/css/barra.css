@@ -1,0 +1,23 @@
+.barra-svg {
+    position: absolute;
+}
+
+.barra-linha {
+    transition: stroke 0.3s ease; /* Transição para mudanças suaves na cor */
+}
+
+.barra-ponto {
+    stroke: blue;
+    stroke-width: 2px;
+}
+
+.barra-nome {
+    font-size: 12px;
+    text-anchor: middle;
+    fill: black;
+}
+
+.resize-handle {
+    fill: gray;
+    cursor: nwse-resize;
+}
