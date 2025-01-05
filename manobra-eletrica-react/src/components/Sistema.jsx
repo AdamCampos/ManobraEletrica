@@ -6,18 +6,16 @@ import '../assets/css/sistema.css';
 const Sistema = () => {
     const { modo, setModo } = useContext(SistemaContext);
 
-    // Alterna o modo entre "Edição" e "Operação"
     const alternarModo = () => {
         setModo((prevModo) => (prevModo === 'Edição' ? 'Operação' : 'Edição'));
     };
 
     return (
         <div className="sistema-container">
-            {/* Botão de alternar modo sempre acessível */}
             <div className="modo-toggle-container">
                 <button
                     onClick={alternarModo}
-                    className={`modo-toggle ${modo.toLowerCase()}`} // Classes dinâmicas baseadas no modo
+                    className={`modo-toggle ${modo.toLowerCase()}`}
                 >
                     Modo: {modo}
                 </button>
@@ -28,32 +26,32 @@ const Sistema = () => {
             <main className="sistema-main">
                 <Painel
                     id="painel-secao-a"
-                    nome="PN-5143001 SEC A"
-                    altura={400}
+                    nome="PN-5143001 A"
+                    altura={100}
                     largura={800}
-                    topo={20}
-                    esquerda={50}
-                    numDisjuntores={8}
+                    topo={100}
+                    esquerda={1}
+                    numDisjuntores={17}
                     escalaDisjuntores={1}
                     barra={{
                         tag: 'Barra Energizada',
-                        estado: modo === 'Edição' ? 'energizado' : 'desativado', // Ajuste do estado da barra
+                        estado: modo === 'Edição' ? 'energizado' : 'desativado',
                         orientacao: 'horizontal',
                         escala: 1,
                     }}
                 />
                 <Painel
                     id="painel-secao-b"
-                    nome="PN-5143001 SEC B"
-                    altura={400}
+                    nome="PN-5143001 B"
+                    altura={100}
                     largura={800}
-                    topo={450}
-                    esquerda={50}
-                    numDisjuntores={10}
+                    topo={100}
+                    esquerda={810}
+                    numDisjuntores={16}
                     escalaDisjuntores={1}
                     barra={{
                         tag: 'Barra Desenergizada',
-                        estado: modo === 'Edição' ? 'energizado' : 'desativado', // Ajuste do estado da barra
+                        estado: modo === 'Edição' ? 'energizado' : 'desativado',
                         orientacao: 'horizontal',
                         escala: 1,
                     }}

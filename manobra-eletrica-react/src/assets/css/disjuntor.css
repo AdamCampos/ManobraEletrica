@@ -1,12 +1,12 @@
 .disjuntor {
     position: absolute;
     cursor: grab;
-    z-index: 2;
+    z-index: 10; /* Garante prioridade no clique */
     transition: box-shadow 0.3s ease;
 }
 
 .disjuntor:hover {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
 .disjuntor-falha {
@@ -25,15 +25,20 @@
     fill: gray;
 }
 
+.disjuntor-edicao {
+    fill: lightgray; /* Cor para modo Edição */
+}
+
 .disjuntor rect {
-    stroke: black;
-    stroke-width: 2px;
-    rx: 10px; /* Arredondamento dos cantos */
-    ry: 10px; /* Arredondamento dos cantos */
+    stroke: gray; /* Borda cinza */
+    stroke-width: 1px; /* Menos espessa */
+    rx: 3px; /* Arredondamento menor */
+    ry: 3px; /* Arredondamento menor */
 }
 
 .disjuntor text {
     font-size: 10px;
     text-anchor: middle;
     pointer-events: none;
+    fill: black; /* Texto visível */
 }
