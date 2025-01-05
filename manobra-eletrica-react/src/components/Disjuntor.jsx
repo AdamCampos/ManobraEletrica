@@ -1,156 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const Disjuntor = ({ id, name, estado, onAcaoSelecionada }) => {
-    const [mostrarJanela, setMostrarJanela] = useState(false);
-    const [janelaPosition, setJanelaPosition] = useState({ x: 0, y: 0 });
+const Disjuntor = ({ id, name, estado, escala = 1, initialPosition, onDragEnd }) => {
+    const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
 
-    const handleClick = (e) => {
-        setJanelaPosition({ x: e.clientX, y: e.clientY });
-        setMostrarJanela(true);
-    };
-
-    const fecharJanela = () => {
-        setMostrarJanela(false);
-    };
-
-    const getFillColor = (estado) => {
-        switch (estado) {
-            case 'aberto':
-                return 'green';
-            case 'fechado':
-                return 'red';
-            case 'falha':
-                return 'yellow';
-            default:
-                return 'white';
+    useEffect(() => {
+        if (initialPosition) {
+            setPosition(initialPosition);
         }
-    };
+    }, [initialPosition]);
 
     const handleMouseDown = (e) => {
+        e.stopPropagation(); // Evita que o evento atinja o painel
         setIsDragging(true);
         setOffset({
-            x: e.clientX - janelaPosition.x,
-            y: e.clientY - janelaPosition.y,
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
         });
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
     };
 
     const handleMouseMove = (e) => {
         if (!isDragging) return;
-        setJanelaPosition({
+        setPosition({
             x: e.clientX - offset.x,
             y: e.clientY - offset.y,
         });
     };
 
     const handleMouseUp = () => {
-        setIsDragging(false);
+        if (isDragging) {
+            setIsDragging(false);
+            if (onDragEnd) {
+                onDragEnd(id, position);
+            }
+        }
+
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
     };
 
+    const tamanho = 100 * escala;
+
     return (
-        <>
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="100"
-                height="100"
-                onClick={handleClick}
-                style={{ cursor: 'pointer' }}
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={`${tamanho}px`}
+            height={`${tamanho}px`}
+            style={{
+                position: 'absolute',
+                top: `${position.y}px`,
+                left: `${position.x}px`,
+                cursor: isDragging ? 'grabbing' : 'grab',
+                zIndex: 2, // Garantir que o disjuntor esteja acima do painel
+            }}
+            onMouseDown={handleMouseDown}
+        >
+            <rect
+                x={10 * escala}
+                y={10 * escala}
+                width={80 * escala}
+                height={80 * escala}
+                fill={estado === 'aberto' ? 'green' : 'red'}
+                stroke="black"
+                strokeWidth={2 * escala}
+            />
+            <line
+                x1={10 * escala}
+                y1={50 * escala}
+                x2={90 * escala}
+                y2={50 * escala}
+                stroke="gray"
+                strokeWidth={2 * escala}
+            />
+            <circle cx={10 * escala} cy={50 * escala} r={5 * escala} fill="blue" />
+            <circle cx={90 * escala} cy={50 * escala} r={5 * escala} fill="blue" />
+            <text
+                x={50 * escala}
+                y={95 * escala}
+                fontSize={12 * escala}
+                textAnchor="middle"
             >
-                {/* Corpo do disjuntor */}
-                <rect
-                    x="10"
-                    y="10"
-                    width="80"
-                    height="80"
-                    fill={getFillColor(estado)}
-                    stroke="black"
-                    strokeWidth="2"
-                />
-                {/* Linha central */}
-                <line x1="10" y1="50" x2="90" y2="50" stroke="gray" strokeWidth="2" />
-                {/* Pontos de ancoragem */}
-                <circle cx="10" cy="50" r="5" fill="blue" />
-                <circle cx="90" cy="50" r="5" fill="blue" />
-                {/* Nome do disjuntor */}
-                <text
-                    x="50"
-                    y="95"
-                    fontSize="12"
-                    textAnchor="middle"
-                >
-                    {name}
-                </text>
-            </svg>
-            {mostrarJanela && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: `${janelaPosition.y}px`,
-                        left: `${janelaPosition.x}px`,
-                        backgroundColor: '#fff',
-                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                        borderRadius: '10px',
-                        padding: '20px',
-                        zIndex: 1000,
-                        cursor: isDragging ? 'grabbing' : 'grab',
-                    }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                >
-                    <h3>Controle do {name}</h3>
-                    <p>Status Atual: <strong>{estado}</strong></p>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                        <button
-                            style={{
-                                backgroundColor: 'green',
-                                color: '#fff',
-                                padding: '10px 20px',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => {
-                                onAcaoSelecionada('abrir');
-                                fecharJanela();
-                            }}
-                        >
-                            Abrir
-                        </button>
-                        <button
-                            style={{
-                                backgroundColor: 'red',
-                                color: '#fff',
-                                padding: '10px 20px',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => {
-                                onAcaoSelecionada('fechar');
-                                fecharJanela();
-                            }}
-                        >
-                            Fechar
-                        </button>
-                        <button
-                            style={{
-                                backgroundColor: '#ccc',
-                                color: '#000',
-                                padding: '10px 20px',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                            }}
-                            onClick={fecharJanela}
-                        >
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            )}
-        </>
+                {name}
+            </text>
+        </svg>
     );
 };
 
