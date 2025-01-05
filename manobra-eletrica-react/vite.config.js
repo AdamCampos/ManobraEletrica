@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "fs";
 import path from "path";
+import svgr from 'vite-plugin-svgr';
 
 // Função auxiliar para resolver caminhos
 const resolvePath = (...segments) => path.resolve(__dirname, ...segments);
@@ -50,5 +51,8 @@ export default defineConfig({
       "@": resolvePath("src"),
     },
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    svgr(), // Adiciona suporte a SVG como componentes React
+],
 });
