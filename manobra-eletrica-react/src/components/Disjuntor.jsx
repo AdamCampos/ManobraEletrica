@@ -1,77 +1,87 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { SistemaContext } from '../ContextoSistema';
-import JanelaComando from './JanelaComando'; // Certifique-se de que a JanelaComando esteja importada
+import JanelaComando from './JanelaComando';
 import '../assets/css/disjuntor.css';
 
 const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragEnd, painelSize }) => {
-    const { modo } = useContext(SistemaContext); // Verifica o modo atual (Edição/Operação)
+    const { modo } = useContext(SistemaContext);
     const [isDragging, setIsDragging] = useState(false);
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 }); // Estado para o deslocamento do drag
-    const [showComando, setShowComando] = useState(false); // Controla a exibição do painel de comandos
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [showComando, setShowComando] = useState(false);
 
     const { x = 0, y = 0 } = position || {};
-    const tamanho = 59.5 * 0.5 * escala; // Dimensões ajustadas pela escala
+    const tamanho = 59.5 * 0.5 * escala;
 
-    const [dragLimits, setDragLimits] = useState({
-        maxX: painelSize?.width - tamanho,
-        maxY: painelSize?.height - tamanho,
-    });
+    const [dragLimits, setDragLimits] = useState({ maxX: 0, maxY: 0 });
 
-    // Atualiza os limites de drag ao redimensionar o painel
     useEffect(() => {
-        setDragLimits({
-            maxX: painelSize?.width - tamanho,
-            maxY: painelSize?.height - tamanho,
-        });
+        if (painelSize && painelSize.width && painelSize.height) {
+            setDragLimits({
+                maxX: painelSize.width - tamanho,
+                maxY: painelSize.height - tamanho,
+            });
+            console.log(`[Disjuntor - ${id}] Limites atualizados: ${JSON.stringify({
+                maxX: painelSize.width - tamanho,
+                maxY: painelSize.height - tamanho,
+            })}`);
+        } else {
+            console.warn(`[Disjuntor - ${id}] painelSize inválido: ${JSON.stringify(painelSize)}`);
+        }
     }, [painelSize, tamanho]);
 
-    // Início do drag
     const handleMouseDown = (e) => {
-        if (modo !== 'Edição') return; // Drag permitido apenas em modo Edição
+        if (modo !== 'Edição') return;
         e.stopPropagation();
-        setIsDragging(true); // Inicia o estado de drag
-        setDragOffset({
+
+        const offset = {
             x: e.clientX - x,
-            y: e.clientY - y, // Calcula o deslocamento inicial
-        });
+            y: e.clientY - y,
+        };
+
+        console.log(`[Disjuntor - ${id}] Início do drag. Offset: ${JSON.stringify(offset)}`);
+
+        setIsDragging(true);
+        setDragOffset(offset);
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-        console.log(`[Disjuntor - ${id}] Início do drag.`);
     };
 
-    // Durante o drag
     const handleMouseMove = (e) => {
         if (!isDragging) return;
-        const newPosition = {
-            x: Math.max(0, Math.min(e.clientX - dragOffset.x, dragLimits.maxX)), // Limita o movimento à direita
-            y: Math.max(0, Math.min(e.clientY - dragOffset.y, dragLimits.maxY)), // Limita o movimento para baixo
-        };
+
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+
+        const newX = Math.max(0, Math.min(mouseX - dragOffset.x, dragLimits.maxX));
+        const newY = Math.max(0, Math.min(mouseY - dragOffset.y, dragLimits.maxY));
+
+        const newPosition = { x: newX, y: newY };
 
         console.log(`[Disjuntor - ${id}] Durante o drag. Nova posição: ${JSON.stringify(newPosition)}`);
-        if (onDragEnd) onDragEnd(id, newPosition); // Notifica o pai sobre a nova posição
+
+        if (onDragEnd) {
+            onDragEnd(id, newPosition); // Notifica o Painel sobre a nova posição
+        }
     };
 
-    // Fim do drag
     const handleMouseUp = () => {
         if (isDragging) {
-            setIsDragging(false); // Finaliza o estado de drag
+            setIsDragging(false);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
             console.log(`[Disjuntor - ${id}] Fim do drag.`);
         }
     };
 
-    // Clique no disjuntor
     const handleClick = (e) => {
         e.stopPropagation();
         if (!isDragging && modo === 'Operação') {
             console.log(`[Disjuntor - ${id}] Clique capturado. Abrindo JanelaComando.`);
-            setShowComando(true); // Abre o painel de comandos
+            setShowComando(true);
         }
     };
 
-    // Fechar o painel de comandos
     const handleCloseComando = () => {
         console.log(`[Disjuntor - ${id}] Fechando JanelaComando.`);
         setShowComando(false);
@@ -89,7 +99,7 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
                     top: `${y}px`,
                     left: `${x}px`,
                     cursor: modo === 'Edição' ? (isDragging ? 'grabbing' : 'grab') : 'pointer',
-                    zIndex: 10, // Garante prioridade no clique
+                    zIndex: 10,
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
@@ -122,11 +132,10 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
                 </text>
             </svg>
 
-            {/* JanelaComando */}
             {showComando && (
                 <JanelaComando
                     nome={name}
-                    onFechar={handleCloseComando} // Fecha o painel de comandos
+                    onFechar={handleCloseComando}
                 />
             )}
         </>

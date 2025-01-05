@@ -147,6 +147,7 @@ const Painel = ({ id, nome, altura, largura, topo, esquerda, numDisjuntores, esc
                     estado={disjuntor.estado}
                     position={disjuntor.position}
                     escala={escalaDisjuntores}
+                    painelSize={size}
                     onDragEnd={(id, newPosition) =>
                         setDisjuntores((prev) =>
                             prev.map((d) => (d.id === id ? { ...d, position: newPosition } : d))
