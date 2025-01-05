@@ -1,253 +1,177 @@
 /* Contêiner principal */
-.blocos-container {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-  }
-  
-  /* Tabela para organizar os controles */
-  .input-table {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    border-collapse: collapse;
-  }
-  
-  .input-table td {
-    padding: 10px;
-    vertical-align: middle;
-  }
-  
-  /* Labels alinhados */
-  .input-table label {
-    color: #3b5998;
-    font-size: 1rem;
-    font-weight: bold;
-    text-align: right;
-    display: inline-block;
-    width: 100%;
-    margin-right: 10px;
-  }
-  
-  /* Inputs e Dropdowns uniformes */
-  .input-table .filter-input,
-  .input-table .p-dropdown {
-    width: 100%;
-    max-width: 400px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    font-size: 0.95rem;
-    box-sizing: border-box;
-  }
-  
-  /* Botões alinhados */
-  .button-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
-  }
-  
-  /* Botões uniformes */
-  .p-button {
-    align-items: center;
-    display: flex;
-    flex: none;
-    font-size: 0.85rem;
-    height: 45px;
-    justify-content: center;
-    text-align: center;
-    width: 150px;
-    background-color: #3b5998; /* Cor primária */
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-  }
-  
-  .p-button:hover {
-    background-color: #2e4272; /* Cor ao passar o mouse */
-  }
-  
-  /* Campo de entrada do filtro */
-  .filter-input {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    width: 100%;
-    max-width: 400px;
-    margin-bottom: 15px;
-    font-size: 0.95rem;
-  }
-  
-  /* Estilo do DataTable */
-  .blocos-dataset .p-datatable {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  
-  .blocos-dataset .p-datatable .p-datatable-header {
-    background-color: #3b5998;
-    color: #fff;
-    font-size: 1rem;
-    text-align: center;
-    padding: 10px;
-  }
-  
-  /* Adicionado: Destaque no hover */
-  .blocos-dataset .p-datatable .p-datatable-tbody tr:hover {
-    background-color: #f0f8ff; /* Cor de fundo ao passar o mouse */
-    cursor: pointer; /* Indica interatividade */
-  }
-  
-  /* Configuração para exibir todos os itens no DataTable */
-  .blocos-dataset .p-datatable-wrapper {
-    max-height: 400px; /* Limita a altura do DataTable */
-    overflow-y: auto; /* Ativa rolagem vertical */
-  }
-  
-  /* Rótulo */
-  .frame-label {
-    color: #3b5998;
-    display: block;
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-align: center;
-  }
-  
-  /* Área de explicação com borda */
-  .blocos-explicacao {
-    background-color: #fdfdfd;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    margin: 20px auto;
-    max-width: 600px;
-    padding: 15px;
-    text-align: justify;
-  }
-  
-  .blocos-explicacao h2 {
-    color: #3b5998;
-    margin: 0 0 10px 0;
-    text-align: center;
-  }
-  
-  .blocos-explicacao p {
-    color: #555;
-    line-height: 1.6;
-    margin: 5px 0 10px 0;
-  }
-  
-  /* Área de botões no topo */
-  .topo-direita {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-  }
-  
-  .topo-direita .p-button {
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    width: 150px;
-  }
-  
-  /* Títulos */
-  h3 {
-    color: #3b5998;
-    text-align: center;
-  }
-  
-  h4 {
-    color: #555;
-    margin-bottom: 10px;
-    text-align: center;
-  }
-  
-  /* Contêiner para imagens SVG */
-  .svg-container {
-    margin: 20px 0;
-    text-align: center;
-  }
-  
-  .svg-container img {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    height: auto;
-    max-width: 100%;
-  }
+.sistema-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9; /* Fundo claro para consistência */
+  color: #3b5998; /* Azul padrão para texto principal */
+  height: 100vh;
+}
 
-  :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
-  
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-  
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-  }
-  a:hover {
-    color: #535bf2;
-  }
-  
-  body {
-    margin: 0;
-    display: flex;
-    place-items: center;
-    min-width: 320px;
-    min-height: 100vh;
-  }
-  
-  h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
-  }
-  
-  button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #1a1a1a;
-    cursor: pointer;
-    transition: border-color 0.25s;
-  }
-  button:hover {
-    border-color: #646cff;
-  }
-  button:focus,
-  button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
-  }
-  
-  @media (prefers-color-scheme: light) {
-    :root {
-      color: #213547;
-      background-color: #ffffff;
-    }
-    a:hover {
-      color: #747bff;
-    }
-    button {
-      background-color: #f9f9f9;
-    }
-  }
-  
+/* Cabeçalho */
+.sistema-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+}
+
+/* Botão de alternar modo */
+.modo-toggle-container {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000; /* Mantém o botão acima de outros elementos */
+}
+
+.modo-toggle {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #3b5998; /* Azul padrão para botões */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modo-toggle:hover {
+  background-color: #2e4272; /* Azul mais escuro para hover */
+}
+
+.modo-toggle.edicao {
+  background-color: #ffc107; /* Amarelo para o modo Edição */
+}
+
+.modo-toggle.operacao {
+  background-color: #28a745; /* Verde para o modo Operação */
+}
+
+/* Área principal */
+.sistema-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Ajuste para tabelas */
+.input-table {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.input-table td {
+  padding: 10px;
+  vertical-align: middle;
+}
+
+.input-table label {
+  color: #3b5998;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: right;
+  display: inline-block;
+  width: 100%;
+  margin-right: 10px;
+}
+
+/* Botões padrão */
+.p-button {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 150px;
+  height: 45px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  background-color: #3b5998; /* Azul padrão */
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.p-button:hover {
+  background-color: #2e4272; /* Azul mais escuro para hover */
+}
+
+/* Títulos */
+h1, h3 {
+  color: #3b5998;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+/* Contêiner para imagens SVG */
+.svg-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.svg-container img {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: auto;
+  max-width: 100%;
+}
+
+/* Estilo de tabelas interativas */
+.blocos-dataset .p-datatable {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.blocos-dataset .p-datatable .p-datatable-header {
+  background-color: #3b5998;
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Destaque ao passar o mouse */
+.blocos-dataset .p-datatable .p-datatable-tbody tr:hover {
+  background-color: #f0f8ff; /* Fundo claro */
+  cursor: pointer;
+}
+
+/* Ajustes gerais */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+}
+
+button {
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+}

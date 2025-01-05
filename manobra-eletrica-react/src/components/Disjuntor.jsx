@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import '../assets/css/disjuntor.css';
 
-const Disjuntor = ({ id, name, estado, escala = 1, initialPosition, onDragEnd }) => {
-    const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
+const Disjuntor = ({ id, name, estado = 'inativo', position, escala, onDragEnd, onClick }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
 
-    useEffect(() => {
-        if (initialPosition) {
-            setPosition(initialPosition);
-        }
-    }, [initialPosition]);
+    // Garantir que a posição seja válida
+    const { x = 0, y = 0 } = position || {};
 
     const handleMouseDown = (e) => {
-        e.stopPropagation(); // Evita que o evento atinja o painel
+        e.stopPropagation();
         setIsDragging(true);
         setOffset({
-            x: e.clientX - position.x,
-            y: e.clientY - position.y,
+            x: e.clientX - x,
+            y: e.clientY - y,
         });
 
         document.addEventListener('mousemove', handleMouseMove);
@@ -25,67 +22,49 @@ const Disjuntor = ({ id, name, estado, escala = 1, initialPosition, onDragEnd })
 
     const handleMouseMove = (e) => {
         if (!isDragging) return;
-        setPosition({
+        const newPosition = {
             x: e.clientX - offset.x,
             y: e.clientY - offset.y,
-        });
+        };
+        if (onDragEnd) onDragEnd(id, newPosition);
     };
 
     const handleMouseUp = () => {
-        if (isDragging) {
-            setIsDragging(false);
-            if (onDragEnd) {
-                onDragEnd(id, position);
-            }
-        }
-
+        setIsDragging(false);
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    const tamanho = 100 * escala;
+    const handleClick = (e) => {
+        e.stopPropagation();
+        if (!isDragging && onClick) {
+            onClick(id);
+        }
+    };
+
+    const tamanho = 59.5; // Tamanho ajustado
+
+    const estadoClass = `disjuntor-${estado}`;
 
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             width={`${tamanho}px`}
             height={`${tamanho}px`}
+            className={`disjuntor ${estadoClass}`}
             style={{
                 position: 'absolute',
-                top: `${position.y}px`,
-                left: `${position.x}px`,
+                top: `${y}px`,
+                left: `${x}px`,
                 cursor: isDragging ? 'grabbing' : 'grab',
-                zIndex: 2, // Garantir que o disjuntor esteja acima do painel
             }}
             onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onClick={handleClick}
         >
-            <rect
-                x={10 * escala}
-                y={10 * escala}
-                width={80 * escala}
-                height={80 * escala}
-                fill={estado === 'aberto' ? 'green' : 'red'}
-                stroke="black"
-                strokeWidth={2 * escala}
-            />
-            <line
-                x1={10 * escala}
-                y1={50 * escala}
-                x2={90 * escala}
-                y2={50 * escala}
-                stroke="gray"
-                strokeWidth={2 * escala}
-            />
-            <circle cx={10 * escala} cy={50 * escala} r={5 * escala} fill="blue" />
-            <circle cx={90 * escala} cy={50 * escala} r={5 * escala} fill="blue" />
-            <text
-                x={50 * escala}
-                y={95 * escala}
-                fontSize={12 * escala}
-                textAnchor="middle"
-            >
-                {name}
-            </text>
+            <rect x="5" y="5" width="50" height="50" />
+            <line x1="5" y1="30" x2="55" y2="30" stroke="gray" strokeWidth="2" />
+            <text x="30" y="55">{name}</text>
         </svg>
     );
 };

@@ -1,0 +1,105 @@
+/* Contêiner principal */
+.sistema-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    height: 100vh;
+}
+
+/* Cabeçalho */
+.sistema-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+}
+
+/* Botão de alternar modo */
+.modo-toggle-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000; /* Mantém o botão acima de todos os elementos */
+}
+
+.modo-toggle {
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #3b5998;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modo-toggle:hover {
+    background-color: #2e4272;
+}
+
+.modo-toggle.edicao {
+    background-color: #ffc107; /* Cor para o modo Edição (laranja) */
+}
+
+.modo-toggle.operacao {
+    background-color: #28a745; /* Cor para o modo Operação (verde) */
+}
+
+/* Área principal */
+.sistema-main {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* Títulos */
+h1 {
+    font-size: 2.5rem;
+    color: #3b5998;
+    text-align: center;
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: #3b5998;
+    text-align: center;
+}
+
+/* Ajuste dos painéis */
+.painel {
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+/* Botões e interatividade */
+.p-button {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    width: 150px;
+    height: 45px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: #3b5998;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.p-button:hover {
+    background-color: #2e4272;
+}

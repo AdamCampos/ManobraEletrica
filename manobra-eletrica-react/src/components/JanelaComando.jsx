@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) => {
-    const [dragPosition, setDragPosition] = useState(position);
+    const [dragPosition, setDragPosition] = useState(position || { x: 100, y: 100 });
     const [isDragging, setIsDragging] = useState(false);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
 

@@ -1,0 +1,39 @@
+.disjuntor {
+    position: absolute;
+    cursor: grab;
+    z-index: 2;
+    transition: box-shadow 0.3s ease;
+}
+
+.disjuntor:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.disjuntor-falha {
+    fill: yellow;
+}
+
+.disjuntor-aberto {
+    fill: lightgreen;
+}
+
+.disjuntor-fechado {
+    fill: red;
+}
+
+.disjuntor-inativo {
+    fill: gray;
+}
+
+.disjuntor rect {
+    stroke: black;
+    stroke-width: 2px;
+    rx: 10px; /* Arredondamento dos cantos */
+    ry: 10px; /* Arredondamento dos cantos */
+}
+
+.disjuntor text {
+    font-size: 10px;
+    text-anchor: middle;
+    pointer-events: none;
+}
