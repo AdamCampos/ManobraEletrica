@@ -3,7 +3,17 @@ import { SistemaContext } from '../ContextoSistema';
 import JanelaComando from './JanelaComando';
 import '../assets/css/disjuntor.css';
 
-const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragEnd, painelSize }) => {
+const Disjuntor = ({
+    id,
+    name,
+    estado = 'inativo',
+    position,
+    escala = 1,
+    onDragEnd,
+    painelSize,
+    orientacao = 'horizontal',
+    onEstadoAlterado,
+}) => {
     const { modo } = useContext(SistemaContext);
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -20,12 +30,6 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
                 maxX: painelSize.width - tamanho,
                 maxY: painelSize.height - tamanho,
             });
-            console.log(`[Disjuntor - ${id}] Limites atualizados: ${JSON.stringify({
-                maxX: painelSize.width - tamanho,
-                maxY: painelSize.height - tamanho,
-            })}`);
-        } else {
-            console.warn(`[Disjuntor - ${id}] painelSize inválido: ${JSON.stringify(painelSize)}`);
         }
     }, [painelSize, tamanho]);
 
@@ -38,8 +42,6 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
             y: e.clientY - y,
         };
 
-        console.log(`[Disjuntor - ${id}] Início do drag. Offset: ${JSON.stringify(offset)}`);
-
         setIsDragging(true);
         setDragOffset(offset);
 
@@ -50,15 +52,10 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
     const handleMouseMove = (e) => {
         if (!isDragging) return;
 
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-
-        const newX = Math.max(0, Math.min(mouseX - dragOffset.x, dragLimits.maxX));
-        const newY = Math.max(0, Math.min(mouseY - dragOffset.y, dragLimits.maxY));
+        const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, dragLimits.maxX));
+        const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, dragLimits.maxY));
 
         const newPosition = { x: newX, y: newY };
-
-        console.log(`[Disjuntor - ${id}] Durante o drag. Nova posição: ${JSON.stringify(newPosition)}`);
 
         if (onDragEnd) {
             onDragEnd(id, newPosition); // Notifica o Painel sobre a nova posição
@@ -70,22 +67,24 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
             setIsDragging(false);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
-            console.log(`[Disjuntor - ${id}] Fim do drag.`);
+            console.log(`[Disjuntor - ${id}] Final do drag -> top: ${y}, left: ${x}`);
         }
     };
 
     const handleClick = (e) => {
         e.stopPropagation();
         if (!isDragging && modo === 'Operação') {
-            console.log(`[Disjuntor - ${id}] Clique capturado. Abrindo JanelaComando.`);
             setShowComando(true);
         }
     };
 
     const handleCloseComando = () => {
-        console.log(`[Disjuntor - ${id}] Fechando JanelaComando.`);
         setShowComando(false);
     };
+
+    const isVerticalLine =
+        (orientacao === 'horizontal' && (estado === 'aberto' || estado === 'inativo')) ||
+        (orientacao === 'vertical' && estado === 'fechado');
 
     return (
         <>
@@ -114,10 +113,10 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
                     ry={tamanho * 0.03}
                 />
                 <line
-                    x1={tamanho * 0.1}
-                    y1={tamanho * 0.5}
-                    x2={tamanho * 0.9}
-                    y2={tamanho * 0.5}
+                    x1={isVerticalLine ? tamanho * 0.5 : tamanho * 0.1}
+                    y1={isVerticalLine ? tamanho * 0.1 : tamanho * 0.5}
+                    x2={isVerticalLine ? tamanho * 0.5 : tamanho * 0.9}
+                    y2={isVerticalLine ? tamanho * 0.9 : tamanho * 0.5}
                     stroke="gray"
                     strokeWidth={tamanho * 0.02}
                 />
@@ -135,6 +134,12 @@ const Disjuntor = ({ id, name, estado = 'inativo', position, escala = 1, onDragE
             {showComando && (
                 <JanelaComando
                     nome={name}
+                    status={estado}
+                    position={{ x: x + 20, y: y + 20 }}
+                    onEstadoAlterado={(novoEstado) => {
+                        if (onEstadoAlterado) onEstadoAlterado(novoEstado);
+                        setShowComando(false);
+                    }}
                     onFechar={handleCloseComando}
                 />
             )}

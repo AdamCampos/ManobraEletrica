@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) => {
+const JanelaComando = ({ nome, status, position, onEstadoAlterado, onFechar }) => {
     const [dragPosition, setDragPosition] = useState(position || { x: 100, y: 100 });
     const [isDragging, setIsDragging] = useState(false);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
+    const [estadoAtual, setEstadoAtual] = useState(status);
+
+    useEffect(() => {
+        setEstadoAtual(status);
+    }, [status]);
 
     const handleMouseDown = (e) => {
         setIsDragging(true);
@@ -25,6 +30,12 @@ const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) 
         setIsDragging(false);
     };
 
+    const handleComando = (comando) => {
+        const novoEstado = comando === 'abrir' ? 'aberto' : 'fechado';
+        setEstadoAtual(novoEstado);
+        if (onEstadoAlterado) onEstadoAlterado(novoEstado);
+    };
+
     return (
         <div
             style={{
@@ -43,7 +54,7 @@ const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) 
             onMouseUp={handleMouseUp}
         >
             <h3>Controle do {nome}</h3>
-            <p>Status Atual: <strong>{status}</strong></p>
+            <p>Status Atual: <strong>{estadoAtual}</strong></p>
             <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                 <button
                     style={{
@@ -52,9 +63,11 @@ const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) 
                         padding: '10px 20px',
                         border: 'none',
                         borderRadius: '5px',
-                        cursor: 'pointer',
+                        cursor: estadoAtual === 'fechado' ? 'pointer' : 'not-allowed',
+                        opacity: estadoAtual === 'fechado' ? 1 : 0.5,
                     }}
-                    onClick={() => onAcaoSelecionada('abrir')}
+                    disabled={estadoAtual !== 'fechado'}
+                    onClick={() => handleComando('abrir')}
                 >
                     Abrir
                 </button>
@@ -65,9 +78,11 @@ const JanelaComando = ({ nome, status, position, onAcaoSelecionada, onFechar }) 
                         padding: '10px 20px',
                         border: 'none',
                         borderRadius: '5px',
-                        cursor: 'pointer',
+                        cursor: estadoAtual === 'aberto' ? 'pointer' : 'not-allowed',
+                        opacity: estadoAtual === 'aberto' ? 1 : 0.5,
                     }}
-                    onClick={() => onAcaoSelecionada('fechar')}
+                    disabled={estadoAtual !== 'aberto'}
+                    onClick={() => handleComando('fechar')}
                 >
                     Fechar
                 </button>

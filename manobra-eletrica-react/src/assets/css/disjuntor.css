@@ -9,31 +9,33 @@
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
-.disjuntor-falha {
-    fill: yellow;
-}
-
-.disjuntor-aberto {
-    fill: lightgreen;
-}
-
-.disjuntor-fechado {
-    fill: red;
-}
-
-.disjuntor-inativo {
-    fill: gray;
-}
-
-.disjuntor-edicao {
-    fill: lightgray; /* Cor para modo Edição */
-}
-
 .disjuntor rect {
+    fill: none; /* Remove qualquer fundo direto do SVG */
     stroke: gray; /* Borda cinza */
     stroke-width: 1px; /* Menos espessa */
     rx: 3px; /* Arredondamento menor */
     ry: 3px; /* Arredondamento menor */
+}
+
+/* Define o preenchimento diretamente no estado */
+.disjuntor-falha rect {
+    fill: yellow;
+}
+
+.disjuntor-aberto rect {
+    fill: lightgreen;
+}
+
+.disjuntor-fechado rect {
+    fill: red;
+}
+
+.disjuntor-inativo rect {
+    fill: gray;
+}
+
+.disjuntor-edicao rect {
+    fill: lightgray; /* Cor para modo Edição */
 }
 
 .disjuntor text {

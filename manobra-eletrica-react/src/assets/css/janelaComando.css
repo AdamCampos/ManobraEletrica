@@ -1,0 +1,63 @@
+.janela-comando {
+    position: absolute;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 1000;
+    user-select: none;
+}
+
+.janela-comando h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.janela-comando p {
+    margin: 10px 0;
+    font-size: 1em;
+    color: #555;
+}
+
+.janela-comando-botoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.janela-comando-botoes button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.botao-abrir {
+    background-color: green;
+    color: #fff;
+}
+
+.botao-fechar {
+    background-color: red;
+    color: #fff;
+}
+
+.botao-cancelar {
+    background-color: #ccc;
+    color: #000;
+}
+
+.botao-abrir.desativado,
+.botao-fechar.desativado {
+    background-color: #ccc;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.botao-abrir:disabled,
+.botao-fechar:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
