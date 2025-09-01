@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Teste SVG inline (pintar grupo _tg_a)</title>
+<style>
+  :root { --energizado:#00C853; --bg:#0f1115; --fg:#e5e7eb; --muted:#9aa0a6; }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial}
+  .wrap{display:grid;grid-template-rows:auto 1fr; height:100%}
+  header{display:flex;gap:.5rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid #222;flex-wrap:wrap}
+  button{padding:.5rem .9rem;border:1px solid #333;background:#1a1f29;color:var(--fg);border-radius:8px;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  input[type="file"]{display:none}
+  label.btn{padding:.5rem .9rem;border:1px dashed #444;border-radius:8px;cursor:pointer}
+  .muted{color:var(--muted)}
+  .stage{display:grid;place-items:center;overflow:auto}
+  #svgHost{width:95%;height:90vh;border:1px solid #222;background:#111;display:grid;place-items:center}
+  #svgHost svg{width:100%;height:100%}
+  .legend{margin-left:auto}
+  code{background:#111;padding:.15rem .4rem;border-radius:6px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <button id="btnToggle" disabled>Pintar _tg_a</button>
+      <label for="file" class="btn">Abrir SVG…</label>
+      <input id="file" type="file" accept=".svg,image/svg+xml" />
+      <span id="status" class="muted">Abra o SVG (drag&drop ou botão).</span>
+      <div class="legend">Teste inline (sem CORS)</div>
+    </header>
+    <div class="stage">
+      <div id="svgHost" title="Solte o SVG aqui"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const btn = document.getElementById('btnToggle');
+  const status = document.getElementById('status');
+  const host = document.getElementById('svgHost');
+  const fileInput = document.getElementById('file');
+
+  let painted = false;
+  let svgRoot = null;
+
+  function loadSvgText(svgText){
+    // Parseia o SVG e injeta inline
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const svg = doc.documentElement;
+
+    // limpa host e injeta
+    host.innerHTML = "";
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    host.appendChild(document.importNode(svg, true));
+
+    svgRoot = host.querySelector("svg");
+
+    const target = svgRoot.querySelector("#_tg_a");
+    if(!target){
+      status.textContent = 'SVG carregado, mas não encontrei o grupo com id "_tg_a". Verifique o id.';
+      btn.disabled = true;
+    } else {
+      status.textContent = 'SVG carregado. Clique para alternar a cor de "_tg_a".';
+      btn.disabled = false;
+      painted = false;
+      btn.textContent = "Pintar _tg_a";
+    }
+  }
+
+  // File input
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => loadSvgText(String(reader.result));
+    reader.readAsText(f);
+  });
+
+  // Drag & drop
+  host.addEventListener('dragover', (e)=>{ e.preventDefault(); host.style.outline='2px dashed #3b82f6' });
+  host.addEventListener('dragleave', ()=>{ host.style.outline='none' });
+  host.addEventListener('drop', (e)=>{
+    e.preventDefault(); host.style.outline='none';
+    const f = e.dataTransfer.files?.[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => loadSvgText(String(reader.result));
+    reader.readAsText(f);
+  });
+
+  function applyColor(groupEl, color){
+    const nodes = groupEl.querySelectorAll('*');
+    nodes.forEach(el => {
+      if(!el.hasAttribute('data-orig-stroke') && el.getAttribute('stroke'))
+        el.setAttribute('data-orig-stroke', el.getAttribute('stroke'));
+      if(!el.hasAttribute('data-orig-fill') && el.getAttribute('fill'))
+        el.setAttribute('data-orig-fill', el.getAttribute('fill'));
+
+      const stroke = el.getAttribute('stroke');
+      if(stroke && stroke !== 'none'){
+        el.setAttribute('stroke', color);
+        el.setAttribute('vector-effect','non-scaling-stroke');
+      }
+      const fill = el.getAttribute('fill');
+      if(fill && fill !== 'none'){
+        el.setAttribute('fill', color);
+      }
+    });
+  }
+
+  function restoreColor(groupEl){
+    const nodes = groupEl.querySelectorAll('*');
+    nodes.forEach(el => {
+      if(el.hasAttribute('data-orig-stroke')){
+        el.setAttribute('stroke', el.getAttribute('data-orig-stroke'));
+        el.removeAttribute('data-orig-stroke');
+      }
+      if(el.hasAttribute('data-orig-fill')){
+        el.setAttribute('fill', el.getAttribute('data-orig-fill'));
+        el.removeAttribute('data-orig-fill');
+      }
+    });
+  }
+
+  btn.addEventListener('click', () => {
+    if(!svgRoot){ return; }
+    const group = svgRoot.querySelector('#_tg_a');
+    if(!group){ status.textContent = 'Grupo _tg_a não encontrado.'; return; }
+
+    if(!painted){
+      const color = getComputedStyle(document.documentElement).getPropertyValue('--energizado').trim() || '#00C853';
+      applyColor(group, color);
+      btn.textContent = 'Restaurar _tg_a';
+      painted = true;
+    } else {
+      restoreColor(group);
+      btn.textContent = 'Pintar _tg_a';
+      painted = false;
+    }
+  });
+
+  // Dica: se você quiser tentar carregar um caminho default via fetch (quando servido por HTTP), descomente abaixo:
+  // fetch('I-DE-3010.2J-5140-946-KES-001_B_20250831_1259.svg').then(r=>r.text()).then(loadSvgText).catch(()=>{});
+})();
+</script>
+</body>
+</html>

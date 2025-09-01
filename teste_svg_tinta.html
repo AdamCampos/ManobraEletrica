@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Teste: pintar grupo _tg_a</title>
+<style>
+  :root { --energizado: #00C853; --bg: #0f1115; --fg: #e5e7eb; --muted:#9aa0a6; }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial}
+  .wrap{display:grid;grid-template-rows:auto 1fr; height:100%}
+  header{display:flex;gap:.5rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid #222}
+  button{padding:.5rem .9rem;border:1px solid #333;background:#1a1f29;color:var(--fg);border-radius:8px;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .muted{color:var(--muted)}
+  .stage{display:grid;place-items:center;overflow:auto}
+  object{width:95%;height:90vh;border:1px solid #222;background:#111}
+  .legend{margin-left:auto}
+  code{background:#111;padding:.15rem .4rem;border-radius:6px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <button id="btnToggle" disabled>Pintar _tg_a</button>
+      <span id="status" class="muted">Carregando SVG…</span>
+      <div class="legend">Arquivo: <code>I-DE-3010.2J-5140-946-KES-001_B_20250831_1259.svg</code></div>
+    </header>
+    <div class="stage">
+      <!-- Mantenha este HTML no mesmo diretório do SVG ou ajuste o caminho abaixo -->
+      <object id="svgObj" type="image/svg+xml" data="I-DE-3010.2J-5140-946-KES-001_B_20250831_1259.svg"></object>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const btn = document.getElementById('btnToggle');
+  const status = document.getElementById('status');
+  const obj = document.getElementById('svgObj');
+
+  let painted = false;
+  let svgDoc = null;
+
+  obj.addEventListener('load', () => {
+    svgDoc = obj.contentDocument;
+    if(!svgDoc){
+      status.textContent = 'Falha ao acessar o SVG (restrição do navegador). Tente abrir via servidor local ou arraste o SVG para dentro do HTML.';
+      return;
+    }
+    const target = svgDoc.getElementById('_tg_a');
+    if(!target){
+      status.textContent = 'Grupo com id "_tg_a" não encontrado. Verifique o id no SVG.';
+    } else {
+      status.textContent = 'Pronto. Clique no botão para alternar a cor.';
+      btn.disabled = false;
+    }
+  });
+
+  // Aplica cor em stroke/fill nos filhos do grupo, preservando cores originais em data-attrs
+  function applyColor(groupEl, color){
+    const nodes = groupEl.querySelectorAll('*');
+    nodes.forEach(el => {
+      // Preserva originais uma única vez
+      if(!el.hasAttribute('data-orig-stroke') && el.getAttribute('stroke'))
+        el.setAttribute('data-orig-stroke', el.getAttribute('stroke'));
+      if(!el.hasAttribute('data-orig-fill') && el.getAttribute('fill'))
+        el.setAttribute('data-orig-fill', el.getAttribute('fill'));
+
+      // Ajusta stroke/fill se existirem e não forem 'none'
+      const stroke = el.getAttribute('stroke');
+      if(stroke && stroke !== 'none'){
+        el.setAttribute('stroke', color);
+        el.setAttribute('vector-effect','non-scaling-stroke');
+      }
+      const fill = el.getAttribute('fill');
+      if(fill && fill !== 'none'){
+        el.setAttribute('fill', color);
+      }
+    });
+  }
+
+  function restoreColor(groupEl){
+    const nodes = groupEl.querySelectorAll('*');
+    nodes.forEach(el => {
+      if(el.hasAttribute('data-orig-stroke')){
+        el.setAttribute('stroke', el.getAttribute('data-orig-stroke'));
+        el.removeAttribute('data-orig-stroke');
+      }
+      if(el.hasAttribute('data-orig-fill')){
+        el.setAttribute('fill', el.getAttribute('data-orig-fill'));
+        el.removeAttribute('data-orig-fill');
+      }
+    });
+  }
+
+  btn.addEventListener('click', () => {
+    if(!svgDoc){ return; }
+    const group = svgDoc.getElementById('_tg_a');
+    if(!group){ status.textContent = 'Grupo _tg_a não encontrado.'; return; }
+
+    if(!painted){
+      applyColor(group, getComputedStyle(document.documentElement).getPropertyValue('--energizado').trim() || '#00C853');
+      btn.textContent = 'Restaurar _tg_a';
+      painted = true;
+    }else{
+      restoreColor(group);
+      btn.textContent = 'Pintar _tg_a';
+      painted = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
