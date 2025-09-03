@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Geradores & Disjuntores – Toggle por layer</title>
+<meta name="color-scheme" content="light">
+<style>
+  :root{
+    --on:#ED8268;  /* LIGA  = vermelho */
+    --off:#85EB78; /* DESL  = verde    */
+    --bg:#ffffff; --fg:#111827; --muted:#4b5563; --card:#ffffff; --br:#e5e7eb;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:14px 18px;border-bottom:1px solid var(--br)}
+  h1{margin:0;font-size:18px}
+  main{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px;box-sizing:border-box;height:calc(100% - 58px)}
+  .panel{background:var(--card);border:1px solid var(--br);border-radius:14px;padding:14px}
+  .panel h2{margin:0 0 12px;color:var(--muted);font-size:13px;letter-spacing:.4px;text-transform:uppercase}
+  .controls{display:grid;gap:10px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:12px;background:#fff}
+  .name{font-weight:600}
+  .dot{width:8px;height:8px;border-radius:99px;background:#9aa0a6;margin-right:8px;display:inline-block}
+  .dot.on{background:var(--on)} .dot.off{background:var(--off)}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button.small{background:#fff;color:var(--fg);border:1px solid var(--br);border-radius:10px;padding:6px 10px;cursor:pointer}
+  button.small:hover{border-color:#7cb8ff}
+  .toggle{--h:30px;--w:64px;position:relative;width:var(--w);height:var(--h);border-radius:calc(var(--h)/2);background:#fff;border:1px solid var(--br);cursor:pointer}
+  .toggle[aria-checked="true"]{border-color:rgba(237,130,104,.6);box-shadow:0 0 0 2px rgba(237,130,104,.25) inset}
+  .knob{position:absolute;top:2px;left:2px;width:calc(var(--h)-4px);height:calc(var(--h)-4px);border-radius:99px;background:#111827;transform:translateX(0);transition:.18s transform}
+  .toggle[aria-checked="true"] .knob{transform:translateX(calc(var(--w) - var(--h)))}
+  .svgwrap{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
+  .holder{border:1px solid var(--br);border-radius:14px;overflow:auto;background:#fff;height:100%}
+
+  /* ===== CSS aplicado às camadas ===== */
+  .gerador,.disjuntor{cursor:pointer;vector-effect:non-scaling-stroke}
+
+  /* Força stroke em QUALQUER elemento dentro do grupo (inclusive <use> clonado) */
+  .gerador--on  * { stroke: var(--on)  !important; }
+  .gerador--off * { stroke: var(--off) !important; }
+  .disjuntor--on  * { stroke: var(--on)  !important; }
+  .disjuntor--off * { stroke: var(--off) !important; }
+
+  /* Mantém preenchimentos originais; só mexemos no stroke */
+  .gerador *,.disjuntor *{ stroke-width:2; }
+</style>
+</head>
+<body>
+<header><h1>Geradores & Disjuntores – toggle por layer</h1></header>
+
+<main>
+  <section class="panel">
+    <h2>Geradores</h2>
+    <div class="controls" id="listGen" role="list" aria-label="Geradores"></div>
+    <div class="toolbar">
+      <button class="small" id="genOn"  type="button">Ligar todos</button>
+      <button class="small" id="genOff" type="button">Desligar todos</button>
+      <button class="small" id="genNeu" type="button">Neutro</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--br);margin:14px 0">
+
+    <h2>Disjuntores</h2>
+    <div class="controls" id="listDj" role="list" aria-label="Disjuntores"></div>
+    <div class="toolbar">
+      <button class="small" id="djOn"  type="button">Ligar todos</button>
+      <button class="small" id="djOff" type="button">Desligar todos</button>
+      <button class="small" id="djNeu" type="button">Neutro</button>
+    </div>
+
+    <div class="toolbar" style="margin-top:12px">
+      <input type="file" id="file" accept=".svg,image/svg+xml" />
+    </div>
+    <small style="color:var(--muted)">Carregue o SVG (evita CORS em <code>file://</code>).</small>
+  </section>
+
+  <section class="panel svgwrap">
+    <div class="holder" id="svgHolder" aria-busy="true" style="display:grid;place-items:center;color:var(--muted)">
+      Carregue um arquivo SVG…
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const holder    = document.getElementById('svgHolder');
+  const fileInput = document.getElementById('file');
+
+  const listGen   = document.getElementById('listGen');
+  const listDj    = document.getElementById('listDj');
+
+  const genOn  = document.getElementById('genOn');
+  const genOff = document.getElementById('genOff');
+  const genNeu = document.getElementById('genNeu');
+
+  const djOn   = document.getElementById('djOn');
+  const djOff  = document.getElementById('djOff');
+  const djNeu  = document.getElementById('djNeu');
+
+  // GERADORES: TG-*, _tg_
+  const GEN_SELECTOR = [
+    'g[id^="TG-"]',
+    'g[inkscape\\:label^="TG-"]',
+    'g[id^="_tg_"]'
+  ].join(',');
+
+  // DISJUNTORES:
+  //  (a) grupos dentro da layer ".disjuntor" com ids "id_dj_*"
+  //  (b) seus nomes "disjuntor_tg_*" (se existirem)
+  const DJ_IN_LAYER = 'g[inkscape\\:label=".disjuntor"] g[id^="id_dj_"]';
+  const DJ_TG = [
+    'g[id^="disjuntor_tg_"]',
+    'g[inkscape\\:label^="disjuntor_tg_"]'
+  ].join(',');
+
+  let genControls = [];
+  let djControls  = [];
+
+  fileInput.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const text = await f.text();
+    inject(text);
+  });
+
+  function inject(svgText){
+    holder.innerHTML = svgText;
+    holder.removeAttribute('aria-busy');
+    const svg = holder.querySelector('svg');
+    if (!svg){ holder.textContent = 'SVG inválido.'; return; }
+
+    // ===== GERADORES =====
+    const genGroups = uniq(Array.from(svg.querySelectorAll(GEN_SELECTOR)));
+    listGen.innerHTML = '';
+    genControls = buildControls(genGroups, 'gerador', listGen, labelGen);
+
+    // ===== DISJUNTORES =====
+    const djFromLayer = Array.from(svg.querySelectorAll(DJ_IN_LAYER));
+    const djFromTG    = Array.from(svg.querySelectorAll(DJ_TG));
+    const djGroups    = uniq([...djFromLayer, ...djFromTG]);
+    listDj.innerHTML  = '';
+    djControls = buildControls(djGroups, 'disjuntor', listDj, labelDj);
+
+    // globais
+    genOn.onclick  = () => genControls.forEach(c => c.set('on'));
+    genOff.onclick = () => genControls.forEach(c => c.set('off'));
+    genNeu.onclick = () => genControls.forEach(c => c.set('neutral'));
+    djOn.onclick   = () => djControls.forEach(c => c.set('on'));
+    djOff.onclick  = () => djControls.forEach(c => c.set('off'));
+    djNeu.onclick  = () => djControls.forEach(c => c.set('neutral'));
+  }
+
+  function uniq(arr){
+    const out = [], seen = new Set();
+    for (const g of arr){
+      if (!g) continue;
+      const key = g.id || g.getAttribute('inkscape:label') || g;
+      if (!seen.has(key)){ seen.add(key); out.push(g); }
+    }
+    return out;
+  }
+
+  function labelGen(g){
+    // tenta pegar GE-TS-5147001x de algum texto dentro do grupo
+    const t = g.querySelector('text');
+    if (t){
+      const s = (t.textContent||'').trim();
+      const m = s.match(/GE-TS-5147001[\w\-]+/i);
+      if (m) return m[0].toUpperCase();
+    }
+    return g.getAttribute('inkscape:label') || g.id || 'Gerador';
+    }
+
+  function labelDj(g){
+    const id  = g.id || '';
+    const lab = g.getAttribute('inkscape:label') || '';
+
+    // Caso mais comum: id_dj_52_01_c → "DJ 52-01 C"
+    const tag = (id || lab);
+    const m = tag.match(/id_dj_(\d+)_?(\d+)?_?([a-z0-9\-]+)?/i);
+    if (m){
+      const a = m[1] || '';
+      const b = m[2] ? `-${m[2]}` : '';
+      const c = m[3] ? ` ${m[3].toUpperCase().replace(/-/g,'-')}` : '';
+      return `DJ ${a}${b}${c}`.trim();
+    }
+    // disjuntor_tg_a → "Disjuntor TG-A"
+    const n = tag.match(/disjuntor_tg_([a-z])/i);
+    if (n) return `Disjuntor TG-${n[1].toUpperCase()}`;
+
+    return lab || id || 'Disjuntor';
+  }
+
+  function buildControls(groups, kind, container, makeLabel){
+    const list = [];
+    groups.forEach(g => {
+      g.classList.add(kind, `${kind}--off`); // estado inicial: OFF (verde)
+
+      const row = document.createElement('div');
+      row.className = 'row'; row.setAttribute('role','listitem');
+
+      const left = document.createElement('div');
+      const dot  = document.createElement('span'); dot.className = 'dot off';
+      const name = document.createElement('span'); name.className = 'name';
+      name.textContent = makeLabel(g);
+      left.append(dot, name);
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'toggle';
+      toggle.setAttribute('role','switch');
+      toggle.setAttribute('aria-checked','false');
+      toggle.innerHTML = '<span class="knob" aria-hidden="true"></span>';
+
+      function set(state){ // on | off | neutral
+        g.classList.remove(`${kind}--on`, `${kind}--off`);
+        dot.classList.remove('on','off');
+        if (state === 'on'){
+          g.classList.add(`${kind}--on`);
+          dot.classList.add('on');
+          toggle.setAttribute('aria-checked','true');
+        } else if (state === 'off'){
+          g.classList.add(`${kind}--off`);
+          dot.classList.add('off');
+          toggle.setAttribute('aria-checked','false');
+        } else {
+          toggle.setAttribute('aria-checked','false'); // neutral
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const isOn = toggle.getAttribute('aria-checked') === 'true';
+        set(isOn ? 'off' : 'on');
+      });
+
+      // Clique direto na camada também alterna
+      g.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const isOn = toggle.getAttribute('aria-checked') === 'true';
+        set(isOn ? 'off' : 'on');
+      });
+
+      row.append(left, toggle);
+      container.appendChild(row);
+      list.push({group:g, set});
+    });
+    return list;
+  }
+})();
+</script>
+</body>
+</html>

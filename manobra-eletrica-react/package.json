@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --host --port 8401 --https",
+    "server": "node ./src/server.js",
+    "dev:all": "concurrently -n API,WEB -c green,cyan \"node ./src/server.js\" \"vite\"",
     "build:deploy": "npm run build && pm2 restart Manobra-Eletrica",
     "clean": "rm -rf node_modules && npm install",
-    "test:build": "vite build && vite preview"
+    "lint": "eslint .",
+    "test:build": "vite build && vite preview --host --port 8401 --https"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -27,11 +29,13 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "rimraf": "^6.0.1",
     "vite": "^6.0.5",
     "vite-plugin-svgr": "^4.3.0"
   }

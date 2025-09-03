@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="light">
+<title>Geradores principais – toggle por layer</title>
+<style>
+  :root{
+    --on:  #ED8268; /* LIGA  = vermelho */
+    --off: #85EB78; /* DESL = verde    */
+    --bg:  #0b0f14; --fg:#e8eaed; --muted:#a1a7b3; --card:#151a22; --br:#232a35;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:14px 18px;border-bottom:1px solid var(--br)}
+  h1{margin:0;font-size:18px}
+  main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px;box-sizing:border-box;height:calc(100% - 58px)}
+  .panel{background:var(--card);border:1px solid var(--br);border-radius:14px;padding:14px}
+  .panel h2{margin:0 0 12px;color:var(--muted);font-size:13px;letter-spacing:.4px;text-transform:uppercase}
+  .controls{display:grid;gap:10px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:12px;background:#0f141b}
+  .name{font-weight:600}
+  .dot{width:8px;height:8px;border-radius:99px;background:#9aa0a6;margin-right:8px;display:inline-block}
+  .dot.on{background:var(--on)} .dot.off{background:var(--off)}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button.small{background:#0a0f15;color:var(--fg);border:1px solid var(--br);border-radius:10px;padding:6px 10px;cursor:pointer}
+  button.small:hover{border-color:#7cb8ff}
+  .toggle{--h:30px;--w:64px;position:relative;width:var(--w);height:var(--h);border-radius:calc(var(--h)/2);background:#0a0f15;border:1px solid var(--br);cursor:pointer}
+  .toggle[aria-checked="true"]{border-color:rgba(255,255,255,.25);box-shadow:0 0 0 2px rgba(237,130,104,.25) inset}
+  .knob{position:absolute;top:2px;left:2px;width:calc(var(--h)-4px);height:calc(var(--h)-4px);border-radius:99px;background:#e8eaed;transform:translateX(0);transition:.18s transform}
+  .toggle[aria-checked="true"] .knob{transform:translateX(calc(var(--w) - var(--h)))}
+  .svgwrap{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
+  .svgtop{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .holder{border:1px solid var(--br);border-radius:14px;overflow:auto;background:#0a0f15;height:100%}
+  /* ===== CSS aplicado aos LAYERS ===== */
+  .gerador{cursor:pointer;vector-effect:non-scaling-stroke}
+  .gerador :is(path,rect,circle,ellipse,line,polyline,polygon){
+    stroke-width:2; fill:none;
+  }
+  .gerador--on  :is(path,rect,circle,ellipse,line,polyline,polygon){ stroke: var(--on)  !important; }
+  .gerador--off :is(path,rect,circle,ellipse,line,polyline,polygon){ stroke: var(--off) !important; }
+  
+  /* === Fundo branco fixo (independe do tema do navegador) === */
+html, body {
+  background: #ffffff !important;
+  color: #111827;         /* texto escuro */
+}
+
+/* Painéis e controles claros */
+.panel,
+.row,
+button.small,
+.toggle {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
+/* Área do desenho e próprio SVG com fundo branco */
+.holder,
+#svgHolder svg {
+  background: #ffffff !important;
+}
+
+/* Pontos/labels em tom mais escuro */
+.name { color: #111827; }
+.dot { background: #9aa0a6; }
+
+  
+</style>
+</head>
+<body>
+<header><h1>Geradores principais (GE-TS-5147001x)</h1></header>
+<main>
+  <section class="panel">
+    <h2>Controles</h2>
+    <div class="controls" id="list" role="list" aria-label="Geradores"></div>
+    <div class="toolbar">
+      <button class="small" id="allOn"  type="button">Ligar todos</button>
+      <button class="small" id="allOff" type="button">Desligar todos</button>
+      <button class="small" id="allNeut" type="button">Neutro</button>
+      <input type="file" id="file" accept=".svg,image/svg+xml" />
+    </div>
+    <small style="color:var(--muted)">Dica: carregue o SVG acima (evita erro de CORS em <code>file://</code>).</small>
+  </section>
+
+  <section class="panel svgwrap">
+    <div class="svgtop">
+      <div style="color:var(--muted)">Clique numa camada TG-* no desenho para alternar liga/desliga.</div>
+      <label class="small btn"><input type="checkbox" id="outline" /> Mostrar contorno padrão</label>
+    </div>
+    <div class="holder" id="svgHolder" aria-busy="true" style="display:grid;place-items:center;color:var(--muted)">Carregue um arquivo SVG…</div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const fileInput = document.getElementById('file');
+  const holder    = document.getElementById('svgHolder');
+  const listEl    = document.getElementById('list');
+  const allOn     = document.getElementById('allOn');
+  const allOff    = document.getElementById('allOff');
+  const allNeut   = document.getElementById('allNeut');
+
+  // Seletores para localizar camadas TG-*, inclusive inkscape:label e variantes _tg_
+  const LAYER_SELECTOR = [
+    'g[id^="TG-"]',
+    'g[inkscape\\:label^="TG-"]',
+    'g[id^="_tg_"]'
+  ].join(',');
+
+  let controls = []; // {group, setState}
+
+  fileInput.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const text = await f.text();
+    injectInline(text);
+  });
+
+  function injectInline(svgText){
+    holder.innerHTML = svgText;
+    holder.removeAttribute('aria-busy');
+
+    const svg = holder.querySelector('svg');
+    if (!svg){ holder.textContent = 'Arquivo não contém <svg> válido.'; return; }
+
+    // Monta lista de camadas dos geradores
+    const layers = Array.from(svg.querySelectorAll(LAYER_SELECTOR));
+    if (!layers.length){
+      listEl.innerHTML = `<div style="color:#a1a7b3">Nenhuma camada TG-* encontrada.</div>`;
+      return;
+    }
+
+    // Limpa lista & estado
+    listEl.innerHTML = '';
+    controls = [];
+
+    layers.forEach(g => {
+      g.classList.add('gerador','gerador--off'); // estado inicial
+
+      const label = pickBestLabel(g) || 'TG-*';
+      const row   = document.createElement('div');
+      row.className = 'row';
+      row.setAttribute('role','listitem');
+
+      const left = document.createElement('div');
+      const dot  = document.createElement('span'); dot.className = 'dot off';
+      const name = document.createElement('span'); name.className = 'name'; name.textContent = label;
+      left.append(dot, name);
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'toggle';
+      toggle.setAttribute('role','switch');
+      toggle.setAttribute('aria-checked','false');
+      toggle.innerHTML = '<span class="knob" aria-hidden="true"></span>';
+
+      function setState(kind){ // 'on' | 'off' | 'neutral'
+        g.classList.remove('gerador--on','gerador--off');
+        dot.classList.remove('on','off');
+        if (kind === 'on'){
+          g.classList.add('gerador--on');
+          toggle.setAttribute('aria-checked','true');
+          dot.classList.add('on');
+        } else if (kind === 'off'){
+          g.classList.add('gerador--off');
+          toggle.setAttribute('aria-checked','false');
+          dot.classList.add('off');
+        } else { // neutral => remove ambas (fica sem cor especial)
+          toggle.setAttribute('aria-checked','false');
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const isOn = toggle.getAttribute('aria-checked') === 'true';
+        setState(isOn ? 'off' : 'on');
+      });
+
+      // Clique direto na camada
+      g.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const isOn = toggle.getAttribute('aria-checked') === 'true';
+        setState(isOn ? 'off' : 'on');
+      });
+
+      row.append(left, toggle);
+      listEl.appendChild(row);
+      controls.push({group:g, setState});
+    });
+
+    allOn.onclick  = () => controls.forEach(c => c.setState('on'));
+    allOff.onclick = () => controls.forEach(c => c.setState('off'));
+    allNeut.onclick= () => controls.forEach(c => c.setState('neutral'));
+  }
+
+  // Tenta achar um rótulo bom para o gerador:
+  // 1) texto GE-TS-5147001X dentro da camada; 2) inkscape:label; 3) id
+  function pickBestLabel(g){
+    const txt = g.querySelector('text');
+    if (txt){
+      const t = (txt.textContent||'').trim();
+      const m = t.match(/GE-TS-5147001[\w-]+/i);
+      if (m) return m[0].toUpperCase();
+    }
+    const lab = g.getAttribute('inkscape:label');
+    if (lab) return lab;
+    if (g.id) return g.id;
+    return '';
+  }
+})();
+</script>
+</body>
+</html>

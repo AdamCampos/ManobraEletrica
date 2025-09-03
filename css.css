@@ -1,0 +1,59 @@
+/* ======================= */
+/* Classes para Inkscape   */
+/* ======================= */
+
+/* 1) Painel */
+.painel {
+  fill: #f8f9fa;
+  stroke: #444444;
+  stroke-width: 2;
+}
+
+/* 2) Trafo (Transformador) */
+.trafo {
+  fill: #ffcc00;
+  stroke: #333333;
+  stroke-width: 2;
+}
+
+/* 3) Disjuntor */
+.disjuntor {
+  fill: #e0e0e0;
+  stroke: #444444;
+  stroke-width: 1.5;
+}
+
+/* 4) Linha de conexão */
+.linha {
+  fill: none;
+  stroke: #007bff;
+  stroke-width: 2;
+}
+
+/* 5) Barra (barramento) */
+.barra {
+  fill: none;
+  stroke: #28a745;
+  stroke-width: 8;
+}
+
+/* 6) Carga (motores, bombas, compressores, etc.) */
+.carga {
+  fill: #6c757d;
+  stroke: #000000;
+  stroke-width: 1.2;
+}
+
+/* 7) Gerador */
+.gerador {
+  fill: #17a2b8;
+  stroke: #004085;
+  stroke-width: 2;
+}
+
+/* 8) Texto comum */
+.texto {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  fill: #000000;
+}
